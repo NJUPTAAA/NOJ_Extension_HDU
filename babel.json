@@ -1,10 +1,10 @@
 {
-    "name":"Template",
-    "code":"template",
+    "name":"HDU",
+    "code":"hdu",
     "type":"virtual-judge",
-    "description": "Template of Interface for NOJ",
+    "description": "HDU Interface for NOJ",
     "license": "MIT",
-    "repository":"https://github.com/NJUPTAAA/NOJ_Extensions_Template",
+    "repository":"https://github.com/NJUPTAAA/NOJ_Extension_HDU",
     "version":"0.1.0",
     "provider":{
         "judger":"Judger",
