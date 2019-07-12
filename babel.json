@@ -1,0 +1,17 @@
+{
+    "name":"Template",
+    "code":"template",
+    "type":"virtual-judge",
+    "description": "Template of Interface for NOJ",
+    "license": "MIT",
+    "repository":"https://github.com/NJUPTAAA/NOJ_Extensions_Template",
+    "version":"0.1.0",
+    "provider":{
+        "judger":"Judger",
+        "crawler":"Crawler",
+        "submitter":"Submitter"
+    },
+    "require":{
+        "NOJ":"^0.3.0"
+    }
+}
