@@ -79,6 +79,10 @@ class Submitter extends Curl
         }
     }
 
+    private function contestSubmit() {
+        //TODO
+    }
+
     public function submit()
     {
         $validator=Validator::make($this->post_data, [
@@ -94,6 +98,10 @@ class Submitter extends Curl
         }
 
         $this->_login();
-        $this->_submit();
+        if(!isset($this->post_data['vcid'])) {
+            $this->_submit();
+        } else {
+            $this->contestSubmit();
+        }
     }
 }

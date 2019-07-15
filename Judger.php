@@ -31,6 +31,7 @@ class Judger extends Curl
     public function judge($row)
     {
         $sub = [];
+        //TODO Contest Judger
         $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id']);
         preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response->body, $match);
         if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';
