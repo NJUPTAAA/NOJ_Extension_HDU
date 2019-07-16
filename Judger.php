@@ -31,8 +31,12 @@ class Judger extends Curl
     public function judge($row)
     {
         $sub = [];
-        //TODO Contest Judger
-        $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id']);
+        if(!isset($row['vcid'])) {
+            $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id']);
+        } else {
+            // TODO this cannot fetch the rid.
+            $response = Requests::get("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&first=".$row['remote_id']);
+        }
         preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response->body, $match);
         if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';
         else $sub['verdict'] = $hdu_v[trim(strip_tags($match[1]))];
@@ -42,7 +46,7 @@ class Judger extends Curl
         $sub['memory'] = intval($matches[2]);
 
         if($sub['verdict'] == 'Compile Error') {
-            $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?rid=".$row['remote_id']);
+            $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?cid=".$row['vcid']."&rid=".$row['remote_id']);
             preg_match ("/<pre>([\\s\\S]*?)<\/pre>/", $ret->body, $match);
             $sub['compile_info'] = trim(strip_tags($match[0]));
         }

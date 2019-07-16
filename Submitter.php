@@ -80,7 +80,34 @@ class Submitter extends Curl
     }
 
     private function contestSubmit() {
-        //TODO
+        $params=[
+            'problemid' => $this->post_data['iid'],
+            'language' => $this->post_data['lang'],
+            'usercode' => $this->post_data["solution"],
+            'submit' => 'Submit',
+        ];
+
+        $pid = $this->post_data['iid'];
+        $vcid = $this->post_data['vcid'];
+        $response=$this->post_data([
+            'site' => "http://acm.hdu.edu.cn/contests/contest_submit.php?cid={$vcid}&pid={$pid}", 
+            'data' => http_build_query($params), 
+            'oj' => "hdu", 
+            "ret" => true,
+            "follow" => false,
+            "returnHeader" => true,
+            "postJson" => false,
+            "extraHeaders" => [],
+            "handle" => $this->selectedJudger["handle"]
+        ]);
+        $this->sub['jid'] = $this->selectedJudger['jid'];
+        $this->sub['vcid'] = $vcid;
+        $res = Requests::get('http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user='.$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
+        if (!preg_match('/<td height="22">([\s\S]*?)<\/td>/', $res->body, $match)) {
+                $this->sub['verdict']='Submission Error';
+        } else {
+                $this->sub['remote_id']=$match[1];
+        }
     }
 
     public function submit()
