@@ -3,6 +3,7 @@ namespace App\Babel\Extension\hdu;
 
 use App\Babel\Submit\Curl;
 use App\Models\SubmissionModel;
+use App\Models\ProblemModel;
 use App\Models\JudgerModel;
 use Requests;
 use Exception;
@@ -26,6 +27,7 @@ class Judger extends Curl
     {
         $this->model["submissionModel"]=new SubmissionModel();
         $this->model["judgerModel"]=new JudgerModel();
+        $this->model["problemModel"]=new ProblemModel();
     }
 
     public function judge($row)
@@ -34,8 +36,9 @@ class Judger extends Curl
         if(!isset($row['vcid'])) {
             $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id']);
         } else {
-            // TODO this cannot fetch the rid.
-            $response = Requests::get("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&first=".$row['remote_id']);
+            $handle = $this->model["judgerModel"]->detail($row['jid'])['handle'];
+            $iid = $this->model['problemModel']->basic($row['pid'])['index_id'];
+            $response = Requests::get("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid);
         }
         preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response->body, $match);
         if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';

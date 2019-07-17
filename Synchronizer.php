@@ -142,6 +142,7 @@ class Synchronizer extends CrawlerBase implements CurlInterface
         $contestInfo['begin_time'] = self::find('/Start Time : .*\/(.*)&/',$res->body);
         $contestInfo['end_time'] = self::find('/End Time : .*\/(.*)"/',$res->body);
         $contestInfo["description"] = "";
+        $contestInfo["vcid"] = $vcid;
         // $type = self::find('/Contest Type : .*\/(.*)&/');
         // $contestInfo['public'] = ($type == "public")?1:0; Cause the NOJ system.
 
