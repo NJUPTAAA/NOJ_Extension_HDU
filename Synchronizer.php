@@ -118,10 +118,10 @@ class Synchronizer extends CrawlerBase implements CurlInterface
 
         if ($problem) {
             $problemModel->clearTags($problem);
-            $new_pid=$this->update_problem($this->oid);
+            $new_pid=$this->updateProblem($this->oid);
             $pro['pid'] = $new_pid;
         } else {
-            $new_pid=$this->insert_problem($this->oid);
+            $new_pid=$this->insertProblem($this->oid);
             $pro['pid'] = $new_pid;
         }
         array_push($this->problemSet, $pro);

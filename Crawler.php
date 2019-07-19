@@ -32,7 +32,7 @@ class Crawler extends CrawlerBase
         if(is_null($this->oid)) {
             throw new Exception("Online Judge Not Found");
         }
-        if ($action=='judge_level') {
+        if ($this->action=='judge_level') {
             $this->judge_level();
         } else {
             $this->crawl($con);
@@ -54,6 +54,7 @@ class Crawler extends CrawlerBase
 
     private function cacheImage($dom)
     {
+        if(!$dom) return $dom;
         foreach ($dom->find('img') as $ele) {
             $src=str_replace('../../..', '', $ele->src);
             if (strpos($src, '://')!==false) {
@@ -93,8 +94,8 @@ class Crawler extends CrawlerBase
             $_lastVolume = intval($HDUVolume->find('a[style="margin:5px"]', -1)->plaintext);
             $lastVolume = isset($_lastVolume)?$_lastVolume:56;
             $HDUVolumePage = HtmlDomParser::str_get_html(Requests::get("http://acm.hdu.edu.cn/listproblem.php?vol=$lastVolume", ['Referer' => 'http://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
-            $_lastProbID = intval($POJVolumePage->find('tr[height="22"]', -1)->find("td", 0)->plaintext);
-            $lastProbID = isset($_lastProbID)?$_lastProbID:6566;
+            $_lastProbID = intval($HDUVolumePage->find('tr[height="22"]', -1)->find("td", 0)->plaintext);
+            $lastProbID = $_lastProbID != 0?$_lastProbID:6566;
             foreach (range(1000, $lastProbID) as $probID) {
                 $this->_crawl($probID, 5);
             }
@@ -123,14 +124,20 @@ class Crawler extends CrawlerBase
         $this->con = $con;
         $this->imgi = 1;
         $problemModel = new ProblemModel();
+        if(!empty($problemModel->basic($problemModel->pid($this->prefix.$con))) && $this->action=="update_problem"){
+            return;
+        }
+        if($this->action=="crawl_problem") $this->line("<fg=yellow>Crawling:   </>{$this->prefix}{$con}");
+        elseif($this->action=="update_problem") $this->line("<fg=yellow>Updating:   </>{$this->prefix}{$con}");
+        else return;
         $res = Requests::get("http://acm.hdu.edu.cn/showproblem.php?pid={$con}");
         if (strpos("No such problem",$res->body) !== false) {
-            header('HTTP/1.1 404 Not Found');
-            die();
+            $this->line("\n  <bg=red;fg=white> Exception </> : <fg=yellow>Can not find problem.</>\n");
+            throw new Exception("Can not find problem");
         }
         if(strpos("Invalid Parameter.",$res->body) !== false) {
-            header('HTTP/1.1 404 Not Found');
-            die();
+            $this->line("\n  <bg=red;fg=white> Exception </> : <fg=yellow>Can not find problem.</>\n");
+            throw new Exception("Can not find problem");
         }
         $res->body = iconv("gb2312","utf-8//IGNORE",$res->body);
         $this->pro['pcode'] = $this->prefix.$con;
@@ -140,6 +147,10 @@ class Crawler extends CrawlerBase
         $this->pro['origin'] = "http://acm.hdu.edu.cn/showproblem.php?pid={$con}";
         
         $this->pro['title'] = self::find("/<h1 style='color:#1A5CC8'>([\s\S]*?)<\/h1>/",$res->body);
+        if($this->pro['title'] == "") {
+            $this->line("\n  <bg=red;fg=white> Exception </> : <fg=yellow>Can not find problem.</>\n");
+            throw new Exception("Can not find problem");
+        }
         $this->pro['time_limit'] = self::find('/Time Limit:.*\/(.*) MS/',$res->body);
         $this->pro['memory_limit'] = self::find('/Memory Limit:.*\/(.*) K/',$res->body);
         $this->pro['solved_count'] = self::find("/Accepted Submission(s): ([\d+]*?)/",$res->body);
@@ -167,9 +178,9 @@ class Crawler extends CrawlerBase
 
         if ($problem) {
             $problemModel->clearTags($problem);
-            $new_pid=$this->update_problem($this->oid);
+            $new_pid=$this->updateProblem($this->oid);
         } else {
-            $new_pid=$this->insert_problem($this->oid);
+            $new_pid=$this->insertProblem($this->oid);
         }
 
         if($this->action=="crawl_problem") $this->line("<fg=green>Crawled:    </>{$this->prefix}{$con}");
