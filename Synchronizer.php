@@ -67,7 +67,7 @@ class Synchronizer extends CrawlerBase implements CurlInterface
         return $dom;
     }
 
-    public function crawlProblem($con,$vcid)
+    public function crawlProblem($con)
     {
         if($con == "all") {
             return ;
@@ -75,14 +75,12 @@ class Synchronizer extends CrawlerBase implements CurlInterface
         $this->con = $con;
         $this->imgi = 1;
         $problemModel = new ProblemModel();
-        $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid={$vcid}");
+        $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid);
         if (strpos("No such problem",$res->body) !== false) {
-            header('HTTP/1.1 404 Not Found');
-            die();
+            return false;
         }
         if(strpos("Invalid Parameter.",$res->body) !== false) {
-            header('HTTP/1.1 404 Not Found');
-            die();
+            return false;
         }
         $res->body = iconv("gb2312","utf-8//IGNORE",$res->body);
         $pro = [];
@@ -90,7 +88,7 @@ class Synchronizer extends CrawlerBase implements CurlInterface
         $pro['OJ'] = $this->oid;
         $pro['contest_id'] = $vcid; //TODO Clarify virtual and NOJ contest.
         $pro['index_id'] = $con;
-        $pro['origin'] = "http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid={$vcid}";
+        $pro['origin'] = "http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid;
         
         $pro['title'] = self::find("/<h1 style='color:#1A5CC8'>([\s\S]*?)<\/h1>/",$res->body);
         $pro['time_limit'] = self::find('/Time Limit:.*\/(.*) MS/',$res->body);
@@ -143,10 +141,9 @@ class Synchronizer extends CrawlerBase implements CurlInterface
         $contestInfo['end_time'] = self::find('/End Time : .*\/(.*)"/',$res->body);
         $contestInfo["description"] = "";
         $contestInfo["vcid"] = $vcid;
-        // $type = self::find('/Contest Type : .*\/(.*)&/');
-        // $contestInfo['public'] = ($type == "public")?1:0; Cause the NOJ system.
 
-        //TODO Scheduled Crawl Problems.
+        $iteratorID = 1001;
+        while(!crawlProblem($iteratorID++)){}
         $noj_cid = $contestModel->arrangeContest($gid, $contestInfo, $this->problemSet);
     }
 

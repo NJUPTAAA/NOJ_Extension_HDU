@@ -1,11 +1,16 @@
 {
     "name":"HDU",
     "code":"hdu",
+    "icon":"resources/hdu@2x.png",
     "type":"virtual-judge",
     "description": "HDU Interface for NOJ",
     "license": "MIT",
     "repository":"https://github.com/NJUPTAAA/NOJ_Extension_HDU",
     "version":"0.1.0",
+    "website":"http://acm.hdu.edu.cn/",
+    "custom":{
+        "css":"resources/custom.css"
+    },
     "provider":{
         "judger":"Judger",
         "crawler":"Crawler",

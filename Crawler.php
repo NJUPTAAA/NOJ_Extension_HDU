@@ -14,17 +14,19 @@ class Crawler extends CrawlerBase
     public $prefix="HDU";
     private $con;
     private $imgi;
+    private $action;
+    private $cached;
 
     /**
      * Initial
      *
      * @return Response
      */
-    public function __construct($conf)
+    public function start($conf)
     {
-        $action=isset($conf["action"])?$conf["action"]:'crawl_problem';
+        $this->action=isset($conf["action"])?$conf["action"]:'crawl_problem';
         $con=isset($conf["con"])?$conf["con"]:'all';
-        $cached=isset($conf["cached"])?$conf["cached"]:false;
+        $this->cached=isset($conf["cached"])?$conf["cached"]:false;
         $this->oid=OJModel::oid('hdu');
 
         if(is_null($this->oid)) {
@@ -84,11 +86,40 @@ class Crawler extends CrawlerBase
         return $dom;
     }
 
-    public function crawl($con)
+    public function crawl($con) 
     {
-        if($con == "all") {
-            return ;
+        if($con=='all'){
+            $HDUVolume = HtmlDomParser::str_get_html(Requests::get("http://acm.hdu.edu.cn/listproblem.php", ['Referer' => 'http://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
+            $_lastVolume = intval($HDUVolume->find('a[style="margin:5px"]', -1)->plaintext);
+            $lastVolume = isset($_lastVolume)?$_lastVolume:56;
+            $HDUVolumePage = HtmlDomParser::str_get_html(Requests::get("http://acm.hdu.edu.cn/listproblem.php?vol=$lastVolume", ['Referer' => 'http://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
+            $_lastProbID = intval($POJVolumePage->find('tr[height="22"]', -1)->find("td", 0)->plaintext);
+            $lastProbID = isset($_lastProbID)?$_lastProbID:6566;
+            foreach (range(1000, $lastProbID) as $probID) {
+                $this->_crawl($probID, 5);
+            }
+        }else{
+            $this->_crawl($con, 5);
         }
+    }
+
+    protected function _crawl($con, $retry=1)
+    {
+        $attempts=1;
+        while($attempts <= $retry){
+            try{
+                $this->crawlProblem($con);
+            }catch(Exception $e){
+                $attempts++;
+                continue;
+            }
+            break;
+        }
+    }
+
+    public function crawlProblem($con)
+    {
+        $this->_resetPro();
         $this->con = $con;
         $this->imgi = 1;
         $problemModel = new ProblemModel();
@@ -140,5 +171,8 @@ class Crawler extends CrawlerBase
         } else {
             $new_pid=$this->insert_problem($this->oid);
         }
+
+        if($this->action=="crawl_problem") $this->line("<fg=green>Crawled:    </>{$this->prefix}{$con}");
+        elseif($this->action=="update_problem") $this->line("<fg=green>Updated:    </>{$this->prefix}{$con}");
     }
 }
