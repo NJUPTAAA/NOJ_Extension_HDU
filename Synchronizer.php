@@ -8,6 +8,7 @@ use App\Models\ContestModel;
 use App\Models\OJModel;
 use Requests;
 use Exception;
+use Cache;
 
 class Synchronizer extends CrawlerBase implements CurlInterface
 {
@@ -175,6 +176,81 @@ class Synchronizer extends CrawlerBase implements CurlInterface
     }
 
     public function crawlRank() {
-        
+        if(!isset($this->noj_cid)) {
+            throw new Exception("No such contest");
+            return false;
+        }
+        $contestModel = new ContestModel();
+        $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page=1");
+        preg_match_all('/<a href=[\s\S]*?style="display: inline-block; padding: 5px 8px; font-weight: bold;">([\d+]*?)<\/a>/',$res->body,$matches);
+        $totalPageNumber = sizeof($matches[1]) / 2;
+        $it = 1;
+        $rank = [];
+        $problemst = $contestModel->contestProblems($this->noj_cid,1);
+        $problemNumber = sizeof($problemst);
+        while($it <= $totalPageNumber) {
+            $ret = Requests::get("http://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page={$it}");
+            $pattern = "/<td>([\s\S]*?)<\/td>";
+            for($i = 1;$i <=3; $i++) {
+                $pattern .= "[\s\s]*?<td>([\s\S]*?)<\/td>";
+            }
+            for($i = 1;$i < $problemNumber;$i++) {
+                $pattern .= "[\s\S]*?<td[\s\S]*?>([\s\S]*?)<\/td>";
+            }
+            $pattern .= "[\s\S]*?<td[\s\S]*?>([\s\S]*?)<\/td>/";
+            preg_match_all($pattern,$ret->body,$matches);
+            $teamNumber = sizeof($matches[1]) - 1;
+            for($i = 1; $i <= $teamNumber; $i++) {
+                $team = [];
+                $team['uid'] = null;
+                $team['name'] = $matches[2][$i];
+                $team['nickname'] = null;
+                $team['score'] = $matches[3][$i];
+                $zerotime = "00:00:00";
+                $team['penalty'] = floor(strtotime($matches[4][$i]) - strtotime($zerotime))%86400/60;
+                $problems = [];
+                for($j = 1; $j <= $problemNumber; $j++) {
+                    $prob = [];
+                    $prob['ncode'] = $j + 1000;
+                    $prob['pid'] = $problemst[$j-1]['pid'];
+                    if($matches[$j+4][$i]!="&nbsp;") {
+                        $prob['color'] = "wemd-green-text";
+                        $startM = strpos($matches[$j+4][$i],"-");
+                        $endM = strpos($matches[$j+4][$i],")");
+                        $prob["wrong_doings"] = intval(substr($matches[$j+4][$i],$startM+1,$endM-$startM-1));
+                        if(!$prob["wrong_doings"]){
+                            $prob["solved_time_parsed"] = trim($matches[$j+4][$i]);
+                        } else {
+                            $prob["solved_time_parsed"] = trim(strip_tags(substr($matches[$j+4][$i],0,$startM-1)));
+                        }
+                    } else {
+                        $prob['color'] = "";
+                        $prob["wrong_doings"] = 0;
+                        $prob["solved_time_parsed"] = "";
+                    }
+                    array_push($problems,$prob);
+                }
+                $team['problem_detail'] = $problems;
+                array_push($rank,$team);
+            }
+        }
+        $contestRankRaw = $contestModel->contestRankCache($this->noj_cid);
+        $rankFinal = array_merge($rank,$contestRankRaw);
+        usort($rankFinal, function ($a, $b) {
+            if ($a["score"]==$b["score"]) {
+                if ($a["penalty"]==$b["penalty"]) {
+                    return 0;
+                } elseif (($a["penalty"]>$b["penalty"])) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+                } elseif ($a["score"]>$b["score"]) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+        });
+        Cache::tags(['contest', 'rank'])->put($this->noj_cid, $rankFinal, 60);
     }
 }
