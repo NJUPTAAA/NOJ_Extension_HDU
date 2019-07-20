@@ -18,11 +18,13 @@ class Synchronizer extends CrawlerBase implements CurlInterface
     private $con;
     private $imgi;
     private $problemSet = [];
+    private $noj_cid;
 
     public function __construct($all_data) {
         $this->oid=OJModel::oid('hdu');
-        $this->vcid=$all_data['cid'];
+        $this->vcid=$all_data['vcid'];
         $this->gid=$all_data['gid'];
+        $this->noj_cid = isset($all_data['cid'])?$all_data['cid']:null;
     }
 
     private static function find($pattern, $subject)
@@ -35,6 +37,7 @@ class Synchronizer extends CrawlerBase implements CurlInterface
 
     private function cacheImage($dom)
     {
+        if(!$dom) return $dom;
         foreach ($dom->find('img') as $ele) {
             $src=str_replace('../../..', '', $ele->src);
             if (strpos($src, '://')!==false) {
@@ -69,9 +72,6 @@ class Synchronizer extends CrawlerBase implements CurlInterface
 
     public function crawlProblem($con)
     {
-        if($con == "all") {
-            return ;
-        }
         $this->con = $con;
         $this->imgi = 1;
         $problemModel = new ProblemModel();
@@ -130,10 +130,10 @@ class Synchronizer extends CrawlerBase implements CurlInterface
     public function crawlContest() {
         $contestModel = new ContestModel();
 
-        $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_show.php?cid={$vcid}");
+        $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid);
+        $res->body = iconv("gb2312","utf-8//IGNORE",$res->body);
         if (strpos("Sign In Your Account",$res->body) !== false) {
-            header('HTTP/1.1 404 Not Found');
-            die();
+            throw new Exception("Contest not public.");
         }
         $contestInfo = [];
         $contestInfo['name'] = self::find('/<h1 style="color:#1a5cc8;margin-top: 20px" align="center">([\s\S]*?)<\/h1>/',$res->body);
@@ -148,10 +148,33 @@ class Synchronizer extends CrawlerBase implements CurlInterface
     }
 
     public function crawlClarification() {
+        if(!isset($this->noj_cid)) {
+            throw new Exception("No such contest");
+            return false;
+        }
+        $startId = 1;
+        while($this->_clarification($startId)) {
+            $startId++;
+        }
+    }
 
+    public function _clarification($id) 
+    {
+        $res = Requests::get("http://acm.hdu.edu.cn/viewnotify.php?id={$id}&cid=".$this->vcid);
+        $res->body = iconv("gb2312","utf-8//IGNORE",$res->body);
+        if(strpos($res->body,"No such notification.") != false) {
+            return false;
+        } else {
+            $contestModel = new ContestModel();
+            $title = self::find("/<strong>([\s\S]*?)<\/strong>/",$res->body);
+            $contentRaw = self::find("/Time : ([\s\S]*?)Posted/",$res->body);
+            $pos = strpos($contentRaw,"<\div>",-1);
+            $content = trim(strip_tags(substr($contentRaw,$pos)));
+            $contestModel->issueAnnouncement($this->noj_cid,$title,$content,1);
+        }
     }
 
     public function crawlRank() {
-
+        
     }
 }
