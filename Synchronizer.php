@@ -5,7 +5,9 @@ use App\Babel\Crawl\CrawlerBase;
 use App\Babel\Submit\Curl;
 use App\Models\ProblemModel;
 use App\Models\ContestModel;
+use App\Models\JudgerModel;
 use App\Models\OJModel;
+use App\Models\GroupModel;
 use KubAT\PhpSimple\HtmlDomParser;
 use Requests;
 use Exception;
@@ -21,12 +23,39 @@ class Synchronizer extends CrawlerBase
     private $imgi;
     private $problemSet = [];
     private $noj_cid;
+    protected $selectedJudger;
 
     public function __construct($all_data) {
         $this->oid=OJModel::oid('hdu');
         $this->vcid=$all_data['vcid'];
         $this->gid=$all_data['gid'];
         $this->noj_cid = isset($all_data['cid'])?$all_data['cid']:null;
+        $judger=new JudgerModel();
+        $judger_list=$judger->list($this->oid);
+        $this->selectedJudger=$judger_list[array_rand($judger_list)];
+    }
+
+    private function _login()
+    {
+        $curl = new Curl();
+        $response=$curl->grab_page([
+            'site' => 'http://acm.hdu.edu.cn',
+            'oj' => 'hdu', 
+            'handle' => $this->selectedJudger["handle"]
+        ]);
+        if (strpos($response, 'Sign In')!==false) {
+            $params=[
+                'username' => $this->selectedJudger["handle"],
+                'userpass' => $this->selectedJudger["password"],
+                'login' => 'Sign In',
+            ];
+            $curl->login([
+                'url' => 'http://acm.hdu.edu.cn/userloginex.php?action=login', 
+                'data' => http_build_query($params), 
+                'oj' => 'hdu', 
+                'handle' => $this->selectedJudger["handle"]
+            ]);
+        }
     }
 
     private static function find($pattern, $subject)
@@ -74,79 +103,89 @@ class Synchronizer extends CrawlerBase
 
     public function crawlProblem($con)
     {
+        $this->_resetPro();
         $this->con = $con;
         $this->imgi = 1;
         $problemModel = new ProblemModel();
         $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid);
-        if (strpos("No such problem",$res->body) !== false) {
+        if (strpos($res->body,"No such problem") != false) {
             return false;
         }
-        if(strpos("Invalid Parameter.",$res->body) !== false) {
+        if(strpos($res->body,"Invalid Parameter.") != false) {
             return false;
         }
         $res->body = iconv("gb2312","utf-8//IGNORE",$res->body);
-        $pro = [];
-        $pro['pcode'] = $this->prefix.$this->vcid."-".$con;
-        $pro['OJ'] = $this->oid;
-        $pro['contest_id'] = null;
-        $pro['index_id'] = $con;
-        $pro['origin'] = "http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid;
+        $this->pro['pcode'] = $this->prefix.$this->vcid."-".$con;
+        $this->pro['OJ'] = $this->oid;
+        $this->pro['contest_id'] = null;
+        $this->pro['index_id'] = $con;
+        $this->pro['origin'] = "http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid;
         
-        $pro['title'] = self::find("/<h1 style='color:#1A5CC8'>([\s\S]*?)<\/h1>/",$res->body);
-        $pro['time_limit'] = self::find('/Time Limit:.*\/(.*) MS/',$res->body);
-        $pro['memory_limit'] = self::find('/Memory Limit:.*\/(.*) K/',$res->body);
-        $pro['solved_count'] = self::find("/Accepted Submission(s): ([\d+]*?)/",$res->body);
-        $pro['input_type'] = 'standard input';
-        $pro['output_type'] = 'standard output';
+        $this->pro['title'] = self::find('/<h1[\s\S]*?>([\s\S]*?)<\/h1>/',$res->body);
+        $this->pro['time_limit'] = self::find('/Time Limit:.*\/(.*) MS/',$res->body);
+        $this->pro['memory_limit'] = self::find('/Memory Limit:.*\/(.*) K/',$res->body);
+        $this->pro['solved_count'] = self::find("/Accepted Submission(s): ([\d+]*?)/",$res->body);
+        $this->pro['input_type'] = 'standard input';
+        $this->pro['output_type'] = 'standard output';
         
-        $pro['description'] = $this->cacheImage(HtmlDomParser::str_get_html(self::find("/Problem Description.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body), true, true, DEFAULT_TARGET_CHARSET, false));
-        $pro['description'] = str_replace("$", "$$", $pro['description']);
-        $pro['input'] = self::find("/<div class=panel_title align=left>Input.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
-        $pro['input'] = str_replace("$", "$$", $pro['input']);
-        $pro['output'] = self::find("/<div class=panel_title align=left>Output.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
-        $pro['output'] = str_replace("$", "$$", $pro['output']);
-        $pro['sample'] = [];
-        $pro['sample'][] = [
+        $this->pro['description'] = $this->cacheImage(HtmlDomParser::str_get_html(self::find("/Problem Description.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body), true, true, DEFAULT_TARGET_CHARSET, false));
+        $this->pro['description'] = str_replace("$", "$$$", $this->pro['description']);
+        $this->pro['input'] = self::find("/<div class=panel_title align=left>Input.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
+        $this->pro['input'] = str_replace("$", "$$$", $this->pro['input']);
+        $this->pro['output'] = self::find("/<div class=panel_title align=left>Output.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
+        $this->pro['output'] = str_replace("$", "$$$", $this->pro['output']);
+        $this->pro['sample'] = [];
+        $this->pro['sample'][] = [
             'sample_input'=>self::find("/<pre><div.*>(.*)<\/div><\/pre>/sU",$res->body),
             'sample_output'=>self::find("/<div.*>Sample Output<\/div><div.*><pre><div.*>(.*)<\/div><\/pre><\/div>/sU",$res->body)
         ];
-        $pro['note'] = self::find("/<i>Hint<\/i><\/div>(.*)<\/div><i style='font-size:1px'>/sU",$res->body);
-        $pro['source'] = strip_tags(self::find("/<div class=panel_title align=left>Source<\/div> (.*)<div class=panel_bottom>/sU",$res->body));
+        $this->pro['note'] = self::find("/<i>Hint<\/i><\/div>(.*)<\/div><i style='font-size:1px'>/sU",$res->body);
+        $this->pro['source'] = strip_tags(self::find("/<div class=panel_title align=left>Source<\/div> (.*)<div class=panel_bottom>/sU",$res->body));
             
-        if($pro['source'] === "") {
-            $pro['source'] = $pro['pcode'];
+        if($this->pro['source'] === "") {
+            $this->pro['source'] = $this->pro['pcode'];
         }
-        $problem=$problemModel->pid($pro['pcode']);
+        $problem=$problemModel->pid($this->pro['pcode']);
 
         if ($problem) {
             $problemModel->clearTags($problem);
             $new_pid=$this->updateProblem($this->oid);
-            $pro['pid'] = $new_pid;
+            $this->pro['pid'] = $new_pid;
         } else {
             $new_pid=$this->insertProblem($this->oid);
-            $pro['pid'] = $new_pid;
+            $this->pro['pid'] = $new_pid;
         }
-        array_push($this->problemSet, $pro);
+        $this->pro['number'] = $con - 1000;
+        $this->pro['points'] = 1;
+        array_push($this->problemSet, $this->pro);
+        return true;
     }
 
     public function crawlContest() {
         $contestModel = new ContestModel();
-
+        $this->_login();
         $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid);
         $res->body = iconv("gb2312","utf-8//IGNORE",$res->body);
         if (strpos("Sign In Your Account",$res->body) !== false) {
             throw new Exception("Contest not public.");
         }
         $contestInfo = [];
-        $contestInfo['name'] = self::find('/<h1 style="color:#1a5cc8;margin-top: 20px" align="center">([\s\S]*?)<\/h1>/',$res->body);
-        $contestInfo['begin_time'] = self::find('/Start Time : .*\/(.*)&/',$res->body);
-        $contestInfo['end_time'] = self::find('/End Time : .*\/(.*)"/',$res->body);
+        $contestInfo['name'] = self::find('/<h1[\s\S]*?>([\s\S]*?)<\/h1>/',$res->body);
+        $contestInfo['begin_time'] = self::find('/Start Time : ([\s\S]*?)&/',$res->body);
+        $contestInfo['end_time'] = self::find('/End Time : ([\s\S]*?)"/',$res->body);
         $contestInfo["description"] = "";
         $contestInfo["vcid"] = $this->vcid;
+        $contestInfo["assign_uid"] = 1;
+        $contestInfo["practice"] = 1;
 
         $iteratorID = 1001;
-        while(!$this->crawlProblem($iteratorID++)){}
-        $noj_cid = $contestModel->arrangeContest($gid, $contestInfo, $this->problemSet);
+        while(true) {
+            $ret = $this->crawlProblem($iteratorID);
+            if(!$ret) break;
+            $iteratorID++;
+        }
+        $noj_cid = $contestModel->arrangeContest($this->gid, $contestInfo, $this->problemSet);
+        $this->line("Successfully crawl the contest.\n");
     }
 
     public function crawlClarification() {
@@ -154,6 +193,7 @@ class Synchronizer extends CrawlerBase
             throw new Exception("No such contest");
             return false;
         }
+        $this->_login();
         $startId = 1;
         while($this->_clarification($startId)) {
             $startId++;
@@ -176,7 +216,9 @@ class Synchronizer extends CrawlerBase
         }
     }
 
-    public function crawlRank() {
+    public function crawlRank() 
+    {
+        $this->_login();
         if(!isset($this->noj_cid)) {
             throw new Exception("No such contest");
             return false;

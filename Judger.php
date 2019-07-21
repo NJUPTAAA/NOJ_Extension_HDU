@@ -30,10 +30,35 @@ class Judger extends Curl
         $this->model["problemModel"]=new ProblemModel();
     }
 
+    private function _login($jid)
+    {
+        $judger = new JudgerModel();
+        $list = $judger->detail($jid);
+        $response=$this->grab_page([
+            'site' => 'http://acm.hdu.edu.cn',
+            'oj' => 'hdu', 
+            'handle' => $list["handle"]
+        ]);
+        if (strpos($response, 'Sign In')!==false) {
+            $params=[
+                'username' => $list["handle"],
+                'userpass' => $list["password"],
+                'login' => 'Sign In',
+            ];
+            $this->login([
+                'url' => 'http://acm.hdu.edu.cn/userloginex.php?action=login', 
+                'data' => http_build_query($params), 
+                'oj' => 'hdu', 
+                'handle' => $list["handle"]
+            ]);
+        }
+    }
+
     public function judge($row)
     {
         $sub = [];
         if(!isset($row['vcid'])) {
+            $this->_login($row['jid']);
             $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id']);
         } else {
             $handle = $this->model["judgerModel"]->detail($row['jid'])['handle'];

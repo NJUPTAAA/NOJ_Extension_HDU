@@ -131,11 +131,11 @@ class Crawler extends CrawlerBase
         elseif($this->action=="update_problem") $this->line("<fg=yellow>Updating:   </>{$this->prefix}{$con}");
         else return;
         $res = Requests::get("http://acm.hdu.edu.cn/showproblem.php?pid={$con}");
-        if (strpos("No such problem",$res->body) !== false) {
+        if (strpos($res->body,"No such problem") !== false) {
             $this->line("\n  <bg=red;fg=white> Exception </> : <fg=yellow>Can not find problem.</>\n");
             throw new Exception("Can not find problem");
         }
-        if(strpos("Invalid Parameter.",$res->body) !== false) {
+        if(strpos($res->body,"Invalid Parameter.") !== false) {
             $this->line("\n  <bg=red;fg=white> Exception </> : <fg=yellow>Can not find problem.</>\n");
             throw new Exception("Can not find problem");
         }
