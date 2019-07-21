@@ -158,11 +158,11 @@ class Crawler extends CrawlerBase
         $this->pro['output_type'] = 'standard output';
         
         $this->pro['description'] = $this->cacheImage(HtmlDomParser::str_get_html(self::find("/Problem Description.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body), true, true, DEFAULT_TARGET_CHARSET, false));
-        $this->pro['description'] = str_replace("$", "$$", $this->pro['description']);
+        $this->pro['description'] = str_replace("$", "$$$", $this->pro['description']);
         $this->pro['input'] = self::find("/<div class=panel_title align=left>Input.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
-        $this->pro['input'] = str_replace("$", "$$", $this->pro['input']);
+        $this->pro['input'] = str_replace("$", "$$$", $this->pro['input']);
         $this->pro['output'] = self::find("/<div class=panel_title align=left>Output.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
-        $this->pro['output'] = str_replace("$", "$$", $this->pro['output']);
+        $this->pro['output'] = str_replace("$", "$$$", $this->pro['output']);
         $this->pro['sample'] = [];
         $this->pro['sample'][] = [
             'sample_input'=>self::find("/<pre><div.*>(.*)<\/div><\/pre>/sU",$res->body),
