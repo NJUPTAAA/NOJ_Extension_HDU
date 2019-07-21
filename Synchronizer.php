@@ -6,11 +6,12 @@ use App\Babel\Submit\Curl;
 use App\Models\ProblemModel;
 use App\Models\ContestModel;
 use App\Models\OJModel;
+use KubAT\PhpSimple\HtmlDomParser;
 use Requests;
 use Exception;
 use Cache;
 
-class Synchronizer extends CrawlerBase implements CurlInterface
+class Synchronizer extends CrawlerBase
 {
     public $oid=null;
     public $vcid=null;
@@ -85,9 +86,9 @@ class Synchronizer extends CrawlerBase implements CurlInterface
         }
         $res->body = iconv("gb2312","utf-8//IGNORE",$res->body);
         $pro = [];
-        $pro['pcode'] = $this->prefix.$vcid."-".$con;
+        $pro['pcode'] = $this->prefix.$this->vcid."-".$con;
         $pro['OJ'] = $this->oid;
-        $pro['contest_id'] = $vcid; //TODO Clarify virtual and NOJ contest.
+        $pro['contest_id'] = null;
         $pro['index_id'] = $con;
         $pro['origin'] = "http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid;
         
@@ -141,10 +142,10 @@ class Synchronizer extends CrawlerBase implements CurlInterface
         $contestInfo['begin_time'] = self::find('/Start Time : .*\/(.*)&/',$res->body);
         $contestInfo['end_time'] = self::find('/End Time : .*\/(.*)"/',$res->body);
         $contestInfo["description"] = "";
-        $contestInfo["vcid"] = $vcid;
+        $contestInfo["vcid"] = $this->vcid;
 
         $iteratorID = 1001;
-        while(!crawlProblem($iteratorID++)){}
+        while(!$this->crawlProblem($iteratorID++)){}
         $noj_cid = $contestModel->arrangeContest($gid, $contestInfo, $this->problemSet);
     }
 
