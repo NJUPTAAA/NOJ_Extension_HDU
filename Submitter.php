@@ -213,7 +213,7 @@ class Submitter extends Curl
             'pid' => 'required|integer',
             'coid' => 'required|integer',
             'iid' => 'required|integer',
-            'solution' => 'required|min:51',
+            'solution' => 'required|min:51|max:65535',
         ]);
 
         if ($validator->fails()) {
