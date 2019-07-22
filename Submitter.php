@@ -7,6 +7,7 @@ use App\Models\JudgerModel;
 use App\Models\OJModel;
 use Illuminate\Support\Facades\Validator;
 use Requests;
+use Log;
 
 class Submitter extends Curl
 {
@@ -78,33 +79,129 @@ class Submitter extends Curl
                 $this->sub['remote_id']=$match[1];
         }
     }
+    private function _loginAndGet($url)
+    {
+        $curl = new Curl();
+        $response=$curl->grab_page([
+            'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->post_data['vcid'],
+            'oj' => 'hdu', 
+            'handle' => $this->selectedJudger["handle"]
+        ]);
+        if (strpos($response, 'Sign In')!==false) {
+            $params=[
+                'username' => $this->selectedJudger["handle"],
+                'userpass' => $this->selectedJudger["password"],
+                'login' => 'Sign In',
+            ];
+            $curl->login([
+                'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'], 
+                'data' => http_build_query($params), 
+                'oj' => 'hdu', 
+                'handle' => $this->selectedJudger["handle"]
+            ]);
+        }
+        return $curl->grab_page([
+            'site'=>$url,
+            'oj'=>'hdu',
+            'handle'=>$this->selectedJudger["handle"],
+        ]);
+    }
+    private function grab($all_data) {
+        $ch = curl_init();
+
+        // Log::alert($all_data['site']);
+        curl_setopt($ch, CURLOPT_URL, $all_data['site']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+
+
+        $headers = array();
+        // $headers[] = 'Cookie: PHPSESSID=1uv8lhltg2ceas7d8qtgon0cc2';
+        // curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_team0670.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_team0670.cookie"));
+
+        $result = curl_exec($ch);
+        curl_close($ch);
+        return $result;
+    }
+    private function __loginAndGet($url)
+    {
+        $curl = new Curl();
+        $response=$curl->grab_page([
+            'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->post_data['vcid'],
+            'oj' => 'hdu', 
+            'handle' => $this->selectedJudger["handle"]
+        ]);
+        if (strpos($response, 'Sign In')!==false) {
+            $params=[
+                'username' => $this->selectedJudger["handle"],
+                'userpass' => $this->selectedJudger["password"],
+                'login' => 'Sign In',
+            ];
+            $curl->login([
+                'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'], 
+                'data' => http_build_query($params), 
+                'oj' => 'hdu', 
+                'handle' => $this->selectedJudger["handle"]
+            ]);
+        }
+        return $this->grab([
+            'site'=>$url,
+            'oj'=>'hdu',
+            'handle'=>$this->selectedJudger["handle"],
+        ]);
+    }
+    private function _contestLogin()
+    {
+        $curl = new Curl();
+        $response=$curl->grab_page([
+            'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->post_data['vcid'],
+            'oj' => 'hdu', 
+            'handle' => $this->selectedJudger["handle"]
+        ]);
+        if (strpos($response, 'Sign In')!==false) {
+            $params=[
+                'username' => $this->selectedJudger["handle"],
+                'userpass' => $this->selectedJudger["password"],
+                'login' => 'Sign In',
+            ];
+            $curl->login([
+                'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'], 
+                'data' => http_build_query($params), 
+                'oj' => 'hdu', 
+                'handle' => $this->selectedJudger["handle"]
+            ]);
+        }
+    }
 
     private function contestSubmit() {
+        $this->_contestLogin();
         $params=[
             'problemid' => $this->post_data['iid'],
             'language' => $this->post_data['lang'],
-            'usercode' => $this->post_data["solution"],
-            'submit' => 'Submit',
+            'usercode' => base64_encode($this->post_data["solution"]),
+            // 'submit' => 'Submit',
         ];
 
         $pid = $this->post_data['iid'];
         $vcid = $this->post_data['vcid'];
         $response=$this->post_data([
-            'site' => "http://acm.hdu.edu.cn/contests/contest_submit.php?cid={$vcid}&pid={$pid}", 
+            // 'site' => "http://acm.hdu.edu.cn/contests/contest_submit.php?cid={$vcid}&pid={$pid}", 
+            'site' => "http://acm.hdu.edu.cn/contests/contest_submit.php?action=submit&cid={$vcid}", 
             'data' => http_build_query($params), 
             'oj' => "hdu", 
             "ret" => true,
             "follow" => false,
             "returnHeader" => true,
-            "postJson" => false,
-            "extraHeaders" => [],
             "handle" => $this->selectedJudger["handle"]
         ]);
         $this->sub['jid'] = $this->selectedJudger['jid'];
         $this->sub['vcid'] = $vcid;
-        $res = Requests::get('http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user='.$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
-        if (!preg_match('/<td height="22">([\s\S]*?)<\/td>/', $res->body, $match)) {
-                $this->sub['verdict']='Submission Error';
+        $res = $this->__loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user=".$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
+        // Log::debug($res);
+        if (!preg_match('/<td height=22>([\s\S]*?)<\/td>/', $res, $match)) {
+                $this->sub['verdict']='System Error';
         } else {
                 $this->sub['remote_id']=$match[1];
         }
@@ -116,7 +213,7 @@ class Submitter extends Curl
             'pid' => 'required|integer',
             'coid' => 'required|integer',
             'iid' => 'required|integer',
-            'solution' => 'required',
+            'solution' => 'required|min:51',
         ]);
 
         if ($validator->fails()) {
@@ -124,8 +221,9 @@ class Submitter extends Curl
             return;
         }
 
-        $this->_login();
+        Log::debug($this->post_data);
         if(!isset($this->post_data['vcid'])) {
+            $this->_login();
             $this->_submit();
         } else {
             $this->contestSubmit();
