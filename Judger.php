@@ -67,7 +67,7 @@ class Judger extends Curl
         }
         preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response->body, $match);
         if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';
-        else $sub['verdict'] = $verdict[trim(strip_tags($match[1]))];
+        else $sub['verdict'] = $this->verdict[trim(strip_tags($match[1]))];
         preg_match ("/<td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/", $response->body, $matches);
         $sub['remote_id'] = $row['remote_id'];
         $sub['time'] = intval($matches[1]);
