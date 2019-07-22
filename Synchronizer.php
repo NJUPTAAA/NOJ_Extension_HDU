@@ -40,7 +40,7 @@ class Synchronizer extends CrawlerBase
     {
         $curl = new Curl();
         $response=$curl->grab_page([
-            'site' => 'http://acm.hdu.edu.cn',
+            'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->vcid,
             'oj' => 'hdu', 
             'handle' => $this->selectedJudger["handle"]
         ]);
@@ -51,7 +51,7 @@ class Synchronizer extends CrawlerBase
                 'login' => 'Sign In',
             ];
             $curl->login([
-                'url' => 'http://acm.hdu.edu.cn/userloginex.php?action=login', 
+                'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$this->vcid, 
                 'data' => http_build_query($params), 
                 'oj' => 'hdu', 
                 'handle' => $this->selectedJudger["handle"]
@@ -290,6 +290,7 @@ class Synchronizer extends CrawlerBase
             }
         }
         $contestRankRaw = $contestModel->contestRankCache($this->noj_cid);
+        // Log::debug(json_encode($rank));
         $rankFinal = array_merge($rank,$contestRankRaw);
         usort($rankFinal, function ($a, $b) {
             if ($a["score"]==$b["score"]) {

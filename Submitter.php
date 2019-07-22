@@ -180,7 +180,7 @@ class Submitter extends Curl
         $params=[
             'problemid' => $this->post_data['iid'],
             'language' => $this->post_data['lang'],
-            'usercode' => base64_encode($this->post_data["solution"]),
+            'usercode' => base64_encode(urlencode($this->post_data["solution"])),
             // 'submit' => 'Submit',
         ];
 
