@@ -201,7 +201,7 @@ class Submitter extends Curl
         $res = $this->__loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user=".$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
         // Log::debug($res);
         if (!preg_match('/<td height=22>([\s\S]*?)<\/td>/', $res, $match)) {
-                $this->sub['verdict']='System Error';
+                $this->sub['verdict']='Submission Error';
         } else {
                 $this->sub['remote_id']=$match[1];
         }
