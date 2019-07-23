@@ -25,7 +25,11 @@ class Submitter extends Curl
         if(is_null($this->oid)) {
             throw new Exception("Online Judge Not Found");
         }
-        $judger_list=$judger->list($this->oid);
+        if(!isset($all_data['vcid'])) {
+            $judger_list=$judger->list($this->oid);
+        } else {
+            $judger_list=$judger->contestJudger($all_data['vcid']);
+        }
         $this->selectedJudger=$judger_list[array_rand($judger_list)];
     }
 

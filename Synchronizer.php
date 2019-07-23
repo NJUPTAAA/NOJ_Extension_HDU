@@ -32,7 +32,7 @@ class Synchronizer extends CrawlerBase
         $this->gid=$all_data['gid'];
         $this->noj_cid = isset($all_data['cid'])?$all_data['cid']:null;
         $judger=new JudgerModel();
-        $judger_list=$judger->list($this->oid);
+        $judger_list=$judger->contestJudger($this->vcid);
         $this->selectedJudger=$judger_list[array_rand($judger_list)];
     }
 
@@ -40,7 +40,7 @@ class Synchronizer extends CrawlerBase
     {
         $curl = new Curl();
         $response=$curl->grab_page([
-            'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->vcid,
+            'site' => "http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid,
             'oj' => 'hdu', 
             'handle' => $this->selectedJudger["handle"]
         ]);
@@ -115,7 +115,6 @@ class Synchronizer extends CrawlerBase
         $problemModel = new ProblemModel();
         $res = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid);
         $this->line("Crawling: {$con}\n");
-        // Log::debug($res);
         if (strpos($res,"No such problem") != false) {
             return false;
         }
@@ -172,11 +171,12 @@ class Synchronizer extends CrawlerBase
     public function crawlContest() {
         $contestModel = new ContestModel();
         $res = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid);
-        // $res = Requests::get("http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid,);
         $res = iconv("gb2312","utf-8//IGNORE",$res);
-        if (strpos("Sign In Your Account",$res) !== false) {
-            throw new Exception("Contest not public.");
-        }
+        // if (strpos($res,"Sign In Your Account") !== false) {
+        //     throw new Exception("Permission denied.");
+        //     return ;
+        // }
+
         $contestInfo = [];
         $contestInfo['name'] = self::find('/<h1[\s\S]*?>([\s\S]*?)<\/h1>/',$res);
         $contestInfo['begin_time'] = self::find('/Start Time : ([\s\S]*?)&/',$res);
@@ -185,19 +185,29 @@ class Synchronizer extends CrawlerBase
         $contestInfo["vcid"] = $this->vcid;
         $contestInfo["assign_uid"] = 1;
         $contestInfo["practice"] = 1;
+        $contestInfo["crawled"] = 0;
 
+        $noj_cid = $contestModel->arrangeContest($this->gid, $contestInfo, $this->problemSet);
+        $this->line("Successfully crawl the contest.\n");
+    }
+
+    public function scheduleCrawl() {
+        if(!isset($this->noj_cid)) {
+            throw new Exception("No such contest");
+            return false;
+        }
         $iteratorID = 1001;
         while(true) {
             $ret = $this->crawlProblem($iteratorID);
             if(!$ret) break;
             $iteratorID++;
+            if($iteratorID > 1020) {
+                $this->line("Something went wrong when crawling, stropping...\n");
+                break;
+            }
         }
-        // for($i = 1; $i<=1;$i++) {
-        //     $this->crawlProblem($iteratorID);
-        //     $iteratorID++;
-        // }
-        $noj_cid = $contestModel->arrangeContest($this->gid, $contestInfo, $this->problemSet);
-        $this->line("Successfully crawl the contest.\n");
+        $contestModel = new ContestModel();
+        $contestModel->contestUpdateProblem($this->noj_cid, $this->problemSet);
     }
 
     public function crawlClarification() {
@@ -205,7 +215,6 @@ class Synchronizer extends CrawlerBase
             throw new Exception("No such contest");
             return false;
         }
-        // $this->_login();
         $startId = 1;
         while($this->_clarification($startId)) {
             $startId++;
@@ -220,17 +229,19 @@ class Synchronizer extends CrawlerBase
             return false;
         } else {
             $contestModel = new ContestModel();
+            if(($contestModel->remoteAnnouncement($this->vcid."-".$id))!=null) {
+                return true;
+            }
             $title = self::find("/<strong>([\s\S]*?)<\/strong>/",$res);
             $contentRaw = self::find("/Time : ([\s\S]*?)Posted/",$res);
             $pos = strpos($contentRaw,"<\div>",-1);
             $content = trim(strip_tags(substr($contentRaw,$pos)));
-            $contestModel->issueAnnouncement($this->noj_cid,$title,$content,1);
+            $contestModel->issueAnnouncement($this->noj_cid,$title,$content,1,$this->vcid."-".$id);
         }
     }
 
     public function crawlRank() 
     {
-        // $this->_login();
         if(!isset($this->noj_cid)) {
             throw new Exception("No such contest");
             return false;
@@ -238,13 +249,17 @@ class Synchronizer extends CrawlerBase
         $contestModel = new ContestModel();
         $res = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page=1");
         preg_match_all('/<a href=[\s\S]*?style="display: inline-block; padding: 5px 8px; font-weight: bold;">([\d+]*?)<\/a>/',$res,$matches);
-        $totalPageNumber = sizeof($matches[1]) / 2;
+        if(!isset($match[1])) {
+            $totalPageNumber = sizeof($matches[1]) / 2;
+        }
         $it = 1;
         $rank = [];
         $problemst = $contestModel->contestProblems($this->noj_cid,1);
         $problemNumber = sizeof($problemst);
         while($it <= $totalPageNumber) {
+            $this->line("Crawling: Page{$it}\n");
             $ret = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page={$it}");
+            $ret = iconv("gb2312","utf-8//IGNORE",$ret);
             $pattern = "/<td>([\s\S]*?)<\/td>";
             for($i = 1;$i <=3; $i++) {
                 $pattern .= "[\s\s]*?<td>([\s\S]*?)<\/td>";
@@ -253,26 +268,36 @@ class Synchronizer extends CrawlerBase
                 $pattern .= "[\s\S]*?<td[\s\S]*?>([\s\S]*?)<\/td>";
             }
             $pattern .= "[\s\S]*?<td[\s\S]*?>([\s\S]*?)<\/td>/";
-            preg_match_all($pattern,$ret->body,$matches);
+            preg_match_all($pattern,$ret,$matches);
             $teamNumber = sizeof($matches[1]) - 1;
             for($i = 1; $i <= $teamNumber; $i++) {
                 $team = [];
                 $team['uid'] = null;
-                $team['name'] = $matches[2][$i];
-                $team['nickname'] = null;
+                $team['name'] = strip_tags($matches[2][$i]);
+                $team['nick_name'] = null;
                 $team['score'] = $matches[3][$i];
-                $zerotime = "00:00:00";
-                $team['penalty'] = floor(strtotime($matches[4][$i]) - strtotime($zerotime))%86400/60;
+                $originTime = $matches[4][$i];
+                $hour = intval(substr($originTime,0,3))*60;
+                $minute = intval(substr($originTime,3,5));
+                $team['penalty'] = $hour + $minute;
                 $problems = [];
                 for($j = 1; $j <= $problemNumber; $j++) {
                     $prob = [];
-                    $prob['ncode'] = $j + 1000;
+                    $prob['ncode'] = chr($j + 64);
                     $prob['pid'] = $problemst[$j-1]['pid'];
                     if($matches[$j+4][$i]!="&nbsp;") {
-                        $prob['color'] = "wemd-green-text";
-                        $startM = strpos($matches[$j+4][$i],"-");
-                        $endM = strpos($matches[$j+4][$i],")");
-                        $prob["wrong_doings"] = intval(substr($matches[$j+4][$i],$startM+1,$endM-$startM-1));
+                        if($matches[$j+4][$i][0]!="(") {
+                            $prob['color'] = "wemd-green-text";
+                        }else {
+                            $prob['color'] = "";
+                        }
+                        if(strpos($matches[$j+4][$i],"-")!=false) {
+                            $startM = strpos($matches[$j+4][$i],"-");
+                            $endM = strpos($matches[$j+4][$i],")");
+                            $prob["wrong_doings"] = intval(substr($matches[$j+4][$i],$startM+1,$endM-$startM-1));
+                        } else {
+                            $prob["wrong_doings"] = 0;
+                        }
                         if(!$prob["wrong_doings"]){
                             $prob["solved_time_parsed"] = trim($matches[$j+4][$i]);
                         } else {
@@ -288,9 +313,9 @@ class Synchronizer extends CrawlerBase
                 $team['problem_detail'] = $problems;
                 array_push($rank,$team);
             }
+            $it++;
         }
         $contestRankRaw = $contestModel->contestRankCache($this->noj_cid);
-        // Log::debug(json_encode($rank));
         $rankFinal = array_merge($rank,$contestRankRaw);
         usort($rankFinal, function ($a, $b) {
             if ($a["score"]==$b["score"]) {
@@ -307,6 +332,8 @@ class Synchronizer extends CrawlerBase
                     return 1;
                 }
         });
-        Cache::tags(['contest', 'rank'])->put($this->noj_cid, $rankFinal, 60);
+        Cache::tags(['contest', 'rank'])->put($this->noj_cid, $rankFinal, 120);
+        Cache::tags(['contest', 'rank'])->put("contestAdmin".$this->noj_cid, $rankFinal, 120);
+        $this->line("Successfully refresh the rank.");
     }
 }

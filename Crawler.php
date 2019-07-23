@@ -159,9 +159,9 @@ class Crawler extends CrawlerBase
         
         $this->pro['description'] = $this->cacheImage(HtmlDomParser::str_get_html(self::find("/Problem Description.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body), true, true, DEFAULT_TARGET_CHARSET, false));
         $this->pro['description'] = str_replace("$", "$$$", $this->pro['description']);
-        $this->pro['input'] = self::find("/<div class=panel_title align=left>Input.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
+        $this->pro['input'] = $this->cacheImage(HtmlDomParser::str_get_html(self::find("/<div class=panel_title align=left>Input.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body), true, true, DEFAULT_TARGET_CHARSET, false));
         $this->pro['input'] = str_replace("$", "$$$", $this->pro['input']);
-        $this->pro['output'] = self::find("/<div class=panel_title align=left>Output.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body);
+        $this->pro['output'] = $this->cacheImage(HtmlDomParser::str_get_html(self::find("/<div class=panel_title align=left>Output.*<div class=panel_content>(.*)<\/div><div class=panel_bottom>/sU",$res->body), true, true, DEFAULT_TARGET_CHARSET, false));
         $this->pro['output'] = str_replace("$", "$$$", $this->pro['output']);
         $this->pro['sample'] = [];
         $this->pro['sample'][] = [

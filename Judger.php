@@ -31,26 +31,24 @@ class Judger extends Curl
         $this->model["problemModel"]=new ProblemModel();
     }
 
-    private function _login($jid,$vcid)
+    private function _login($handle, $pass, $vcid)
     {
-        $judger = new JudgerModel();
-        $list = $judger->detail($jid);
         $response=$this->grab_page([
             'site' =>  'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$vcid,
             'oj' => 'hdu', 
-            'handle' => $list["handle"]
+            'handle' => $handle
         ]);
         if (strpos($response, 'Sign In')!==false) {
             $params=[
-                'username' => $list["handle"],
-                'userpass' => $list["password"],
+                'username' => $handle,
+                'userpass' => $pass,
                 'login' => 'Sign In',
             ];
             $this->login([
                 'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid, 
                 'data' => http_build_query($params), 
                 'oj' => 'hdu', 
-                'handle' => $list["handle"]
+                'handle' => $handle
             ]);
         }
     }
@@ -106,11 +104,12 @@ class Judger extends Curl
         if(!isset($row['vcid'])) {
             $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id'])->body;
         } else {
-            $this->_login($row['jid'],$row['vcid']);
-            $handle = $this->model["judgerModel"]->detail($row['jid'])['handle'];
+            $judger = $this->model["judgerModel"]->contestJudgerDetail($row['jid']);
             $iid = $this->model['problemModel']->basic($row['pid'])['index_id'];
-            $pass = $this->model["judgerModel"]->detail($row['jid'])['password'];
-            $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid,$handle,$pass,$row['vcid']);
+            $handle = $list['handle'];
+            $pass = $list['password'];
+            $this->_login($handle, $pass, $row['vcid']);
+            $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid, $handle, $pass, $row['vcid']);
         }
         if(isset($row['vcid'])) {
             preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
