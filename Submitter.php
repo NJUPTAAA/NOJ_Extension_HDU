@@ -79,6 +79,7 @@ class Submitter extends Curl
                 $this->sub['remote_id']=$match[1];
         }
     }
+
     private function _loginAndGet($url)
     {
         $curl = new Curl();
@@ -106,6 +107,7 @@ class Submitter extends Curl
             'handle'=>$this->selectedJudger["handle"],
         ]);
     }
+
     private function grab($all_data) {
         $ch = curl_init();
 
@@ -125,6 +127,7 @@ class Submitter extends Curl
         curl_close($ch);
         return $result;
     }
+
     private function __loginAndGet($url)
     {
         $curl = new Curl();
@@ -152,6 +155,7 @@ class Submitter extends Curl
             'handle'=>$this->selectedJudger["handle"],
         ]);
     }
+
     private function _contestLogin()
     {
         $curl = new Curl();
@@ -181,13 +185,11 @@ class Submitter extends Curl
             'problemid' => $this->post_data['iid'],
             'language' => $this->post_data['lang'],
             'usercode' => base64_encode(urlencode($this->post_data["solution"])),
-            // 'submit' => 'Submit',
         ];
 
         $pid = $this->post_data['iid'];
         $vcid = $this->post_data['vcid'];
         $response=$this->post_data([
-            // 'site' => "http://acm.hdu.edu.cn/contests/contest_submit.php?cid={$vcid}&pid={$pid}", 
             'site' => "http://acm.hdu.edu.cn/contests/contest_submit.php?action=submit&cid={$vcid}", 
             'data' => http_build_query($params), 
             'oj' => "hdu", 
@@ -199,7 +201,6 @@ class Submitter extends Curl
         $this->sub['jid'] = $this->selectedJudger['jid'];
         $this->sub['vcid'] = $vcid;
         $res = $this->__loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user=".$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
-        // Log::debug($res);
         if (!preg_match('/<td height=22>([\s\S]*?)<\/td>/', $res, $match)) {
                 $this->sub['verdict']='Submission Error';
         } else {
@@ -220,8 +221,7 @@ class Submitter extends Curl
             $this->sub['verdict']="System Error";
             return;
         }
-
-        Log::debug($this->post_data);
+        
         if(!isset($this->post_data['vcid'])) {
             $this->_login();
             $this->_submit();

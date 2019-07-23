@@ -29,7 +29,6 @@ class Judger extends Curl
         $this->model["submissionModel"]=new SubmissionModel();
         $this->model["judgerModel"]=new JudgerModel();
         $this->model["problemModel"]=new ProblemModel();
-        Log::debug("1");
     }
 
     private function _login($jid,$vcid)
@@ -55,18 +54,16 @@ class Judger extends Curl
             ]);
         }
     }
+
     private function grab($all_data) {
         $ch = curl_init();
 
-        // Log::alert($all_data['site']);
         curl_setopt($ch, CURLOPT_URL, $all_data['site']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
 
 
         $headers = array();
-        // $headers[] = 'Cookie: PHPSESSID=1uv8lhltg2ceas7d8qtgon0cc2';
-        // curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_team0670.cookie"));
         curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_team0670.cookie"));
 
@@ -106,33 +103,26 @@ class Judger extends Curl
     public function judge($row)
     {
         $sub = [];
-        // Log::debug(json_encode($row));
         if(!isset($row['vcid'])) {
             $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id'])->body;
         } else {
             $this->_login($row['jid'],$row['vcid']);
             $handle = $this->model["judgerModel"]->detail($row['jid'])['handle'];
-            // Log::warning('10000');
             $iid = $this->model['problemModel']->basic($row['pid'])['index_id'];
             $pass = $this->model["judgerModel"]->detail($row['jid'])['password'];
             $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid,$handle,$pass,$row['vcid']);
-            // Log::warning('10001');
         }
-        // file_put_contents(getenv('temp').'\\hdu.txt', $response);
-        // Log::debug($response);
-        // file_put_contents("/Users/ycy12/Desktop/t.txt",$response);
-        // Log::warning('10003');
-        preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
-        // Log::warning($match[1]);
+        if(isset($row['vcid'])) {
+            preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
+        }else {
+            preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
+        }
         if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';
         else $sub['verdict'] = $this->verdict[trim(strip_tags($match[1]))];
-        // Log::warning('10006');
         preg_match ("/<td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/", $response, $matches);
         $sub['remote_id'] = $row['remote_id'];
-        // Log::debug(json_encode($matches));
         $sub['time'] = intval($matches[1]);
         $sub['memory'] = intval($matches[2]);
-        // Log::warning('10005');
 
         if($sub['verdict'] == 'Compile Error') {
             $ret = $this->_loginAndGet("http://acm.hdu.edu.cn/viewerror.php?cid=".$row['vcid']."&rid=".$row['remote_id'], $handle, $pass, $row["vcid"]);
