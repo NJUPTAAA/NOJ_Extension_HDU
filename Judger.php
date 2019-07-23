@@ -125,7 +125,11 @@ class Judger extends Curl
         $sub['memory'] = intval($matches[2]);
 
         if($sub['verdict'] == 'Compile Error') {
-            $ret = $this->_loginAndGet("http://acm.hdu.edu.cn/viewerror.php?cid=".$row['vcid']."&rid=".$row['remote_id'], $handle, $pass, $row["vcid"]);
+            if(isset($row['vcid'])) {
+                $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?cid=".$row['vcid']."&rid=".$row['remote_id'])->body;
+            }else {
+                $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?rid=".$row['remote_id'])->body;
+            }
             preg_match ("/<pre>([\\s\\S]*?)<\/pre>/", $ret, $match);
             $sub['compile_info'] = trim(strip_tags($match[0]));
         }
