@@ -124,7 +124,7 @@ class Judger extends Curl
                     if(strpos($verdict, "Runtime Error")!=false) {
                         $sub['verdict'] = "Runtime Error";
                     } else {
-                        $sub['verdict'] = $this->verdict[trim($elements[2]->plaintext)];
+                        $sub['verdict'] = $this->verdict[$verdict];
                     }
                     $sub['time'] = intval(substr($elements[4]->plaintext,0,strpos($elements[4]->plaintext,"M")));
                     $sub['memory'] = intval(substr($elements[5]->plaintext,0,strpos($elements[5]->plaintext,"K")));
