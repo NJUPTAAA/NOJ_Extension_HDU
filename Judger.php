@@ -107,8 +107,8 @@ class Judger extends Curl
         } else {
             $judger = $this->model["judgerModel"]->contestJudgerDetail($row['jid']);
             $iid = $this->model['problemModel']->basic($row['pid'])['index_id'];
-            $handle = $list['handle'];
-            $pass = $list['password'];
+            $handle = $judger['handle'];
+            $pass = $judger['password'];
             $this->_login($handle, $pass, $row['vcid']);
             $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid, $handle, $pass, $row['vcid']);
         }
