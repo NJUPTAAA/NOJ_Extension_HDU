@@ -55,6 +55,8 @@ class Judger extends Curl
     }
 
     private function grab($all_data) {
+        $oj = $all_data['oj'];
+        $handle = $all_data['handle'];
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $all_data['site']);
@@ -63,8 +65,8 @@ class Judger extends Curl
 
 
         $headers = array();
-        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_team0670.cookie"));
-        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_team0670.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/{$oj}_{$handle}.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/{$oj}_{$handle}.cookie"));
 
         $result = curl_exec($ch);
         curl_close($ch);
@@ -111,6 +113,7 @@ class Judger extends Curl
             $pass = $judger['password'];
             $this->_login($handle, $pass, $row['vcid']);
             $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid, $handle, $pass, $row['vcid']);
+            Log::debug($response);
         }
         if(isset($row['vcid'])) {
             $hduRes = HTMLDomParser::str_get_html($response, true, true, DEFAULT_TARGET_CHARSET, false);
