@@ -113,7 +113,7 @@ class Judger extends Curl
             $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid, $handle, $pass, $row['vcid']);
         }
         if(isset($row['vcid'])) {
-            $hduRes = HTMLDomParser::str_get_html($response, ['Referer' => 'http://acm.hdu.edu.cn'], true, true, DEFAULT_TARGET_CHARSET, false);
+            $hduRes = HTMLDomParser::str_get_html($response, true, true, DEFAULT_TARGET_CHARSET, false);
             foreach($hduRes->find('tr') as $ele) {
                 $elements=$ele->children();
                 if($elements[0]->plaintext==$row['remote_id']) {
