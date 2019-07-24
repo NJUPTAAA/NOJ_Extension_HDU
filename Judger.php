@@ -121,7 +121,7 @@ class Judger extends Curl
                 $elements=$ele->children();
                 if($elements[0]->plaintext==$row['remote_id']) {
                     $verdict = trim($elements[2]->plaintext);
-                    if(strpos($verdict, "Runtime Error")!=false) {
+                    if(strpos($verdict, "Runtime Error") !== false) {
                         $sub['verdict'] = "Runtime Error";
                     } else {
                         $sub['verdict'] = $this->verdict[$verdict];

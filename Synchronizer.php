@@ -115,10 +115,10 @@ class Synchronizer extends CrawlerBase
         $problemModel = new ProblemModel();
         $res = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid);
         $this->line("Crawling: {$con}\n");
-        if (strpos($res,"No such problem") != false) {
+        if (strpos($res,"No such problem") !== false) {
             return false;
         }
-        if(strpos($res,"Invalid Parameter.") != false) {
+        if(strpos($res,"Invalid Parameter.") !== false) {
             return false;
         }
         $res = iconv("gb2312","utf-8//IGNORE",$res);
@@ -225,7 +225,7 @@ class Synchronizer extends CrawlerBase
     {
         $res = $this->_loginAndGet("http://acm.hdu.edu.cn/viewnotify.php?id={$id}&cid=".$this->vcid);
         $res = iconv("gb2312","utf-8//IGNORE",$res);
-        if(strpos($res,"No such notification.") != false) {
+        if(strpos($res,"No such notification.") !== false) {
             return false;
         } else {
             $contestModel = new ContestModel();
@@ -291,7 +291,7 @@ class Synchronizer extends CrawlerBase
                         }else {
                             $prob['color'] = "";
                         }
-                        if(strpos($matches[$j+4][$i],"-")!=false) {
+                        if(strpos($matches[$j+4][$i],"-")!==false) {
                             $startM = strpos($matches[$j+4][$i],"-");
                             $endM = strpos($matches[$j+4][$i],")");
                             $prob["wrong_doings"] = intval(substr($matches[$j+4][$i],$startM+1,$endM-$startM-1));
