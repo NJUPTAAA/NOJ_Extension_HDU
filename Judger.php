@@ -113,14 +113,19 @@ class Judger extends Curl
             $pass = $judger['password'];
             $this->_login($handle, $pass, $row['vcid']);
             $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid, $handle, $pass, $row['vcid']);
-            Log::debug($response);
+            // Log::debug($response);
         }
         if(isset($row['vcid'])) {
             $hduRes = HTMLDomParser::str_get_html($response, true, true, DEFAULT_TARGET_CHARSET, false);
             foreach($hduRes->find('tr') as $ele) {
                 $elements=$ele->children();
                 if($elements[0]->plaintext==$row['remote_id']) {
-                    $sub['verdict'] = $this->verdict[trim($elements[2]->plaintext)];
+                    $verdict = trim($elements[2]->plaintext);
+                    if(strpos($verdict, "Runtime Error")!=false) {
+                        $sub['verdict'] = "Runtime Error";
+                    } else {
+                        $sub['verdict'] = $this->verdict[trim($elements[2]->plaintext)];
+                    }
                     $sub['time'] = intval(substr($elements[4]->plaintext,0,strpos($elements[4]->plaintext,"M")));
                     $sub['memory'] = intval(substr($elements[5]->plaintext,0,strpos($elements[5]->plaintext,"K")));
                     $sub['remote_id'] = $row['remote_id'];
