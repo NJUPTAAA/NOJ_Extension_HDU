@@ -114,32 +114,42 @@ class Judger extends Curl
         }
         if(isset($row['vcid'])) {
             $hduRes = HTMLDomParser::str_get_html($response, ['Referer' => 'http://acm.hdu.edu.cn'], true, true, DEFAULT_TARGET_CHARSET, false);
-            // foreach($hduRes->find('tr') as $ele) {
-            //     foreach($ele->find('td') as $eleline) {
-            //         if($eleline->)
-            //     }
-            // }
-            preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
+            foreach($hduRes->find('tr') as $ele) {
+                $elements=$ele->children();
+                if($elements[0]->plaintext==$row['remote_id']) {
+                    $sub['verdict'] = $this->verdict[trim($elements[2]->plaintext)];
+                    $sub['time'] = intval(substr($elements[4]->plaintext,0,strpos($elements[4]->plaintext,"M")));
+                    $sub['memory'] = intval(substr($elements[5]->plaintext,0,strpos($elements[5]->plaintext,"K")));
+                    $sub['remote_id'] = $row['remote_id'];
+                    if($sub['verdict'] == 'Compile Error') {
+                        $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?cid=".$row['vcid']."&rid=".$row['remote_id'])->body;
+                        preg_match ("/<pre>([\\s\\S]*?)<\/pre>/", $ret, $match);
+                        $sub['compile_info'] = trim(strip_tags($match[0]));
+                    }
+                    $this->model["submissionModel"]->updateSubmission($row['sid'], $sub);
+                    return ;
+                }
+            }
         }else {
             preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
-        }
-        if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';
-        else $sub['verdict'] = $this->verdict[trim(strip_tags($match[1]))];
-        preg_match ("/<td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/", $response, $matches);
-        $sub['remote_id'] = $row['remote_id'];
-        $sub['time'] = intval($matches[1]);
-        $sub['memory'] = intval($matches[2]);
+            if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';
+            else $sub['verdict'] = $this->verdict[trim(strip_tags($match[1]))];
+            preg_match ("/<td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/", $response, $matches);
+            $sub['remote_id'] = $row['remote_id'];
+            $sub['time'] = intval($matches[1]);
+            $sub['memory'] = intval($matches[2]);
 
-        if($sub['verdict'] == 'Compile Error') {
-            if(isset($row['vcid'])) {
-                $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?cid=".$row['vcid']."&rid=".$row['remote_id'])->body;
-            }else {
-                $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?rid=".$row['remote_id'])->body;
+            if($sub['verdict'] == 'Compile Error') {
+                if(isset($row['vcid'])) {
+                    $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?cid=".$row['vcid']."&rid=".$row['remote_id'])->body;
+                }else {
+                    $ret = Requests::get("http://acm.hdu.edu.cn/viewerror.php?rid=".$row['remote_id'])->body;
+                }
+                preg_match ("/<pre>([\\s\\S]*?)<\/pre>/", $ret, $match);
+                $sub['compile_info'] = trim(strip_tags($match[0]));
             }
-            preg_match ("/<pre>([\\s\\S]*?)<\/pre>/", $ret, $match);
-            $sub['compile_info'] = trim(strip_tags($match[0]));
-        }
 
-        $this->model["submissionModel"]->updateSubmission($row['sid'], $sub);
+            $this->model["submissionModel"]->updateSubmission($row['sid'], $sub);
+        }
     }
 }
