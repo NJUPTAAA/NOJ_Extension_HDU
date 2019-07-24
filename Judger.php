@@ -5,6 +5,7 @@ use App\Babel\Submit\Curl;
 use App\Models\SubmissionModel;
 use App\Models\ProblemModel;
 use App\Models\JudgerModel;
+use KubAT\PhpSimple\HtmlDomParser;
 use Requests;
 use Exception;
 use Log;
@@ -112,6 +113,12 @@ class Judger extends Curl
             $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid, $handle, $pass, $row['vcid']);
         }
         if(isset($row['vcid'])) {
+            $hduRes = HTMLDomParser::str_get_html($response, ['Referer' => 'http://acm.hdu.edu.cn'], true, true, DEFAULT_TARGET_CHARSET, false);
+            // foreach($hduRes->find('tr') as $ele) {
+            //     foreach($ele->find('td') as $eleline) {
+            //         if($eleline->)
+            //     }
+            // }
             preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
         }else {
             preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);

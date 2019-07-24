@@ -113,6 +113,8 @@ class Submitter extends Curl
     }
 
     private function grab($all_data) {
+        $oj = $all_data['oj'];
+        $handle = $all_data['handle'];
         $ch = curl_init();
 
         // Log::alert($all_data['site']);
@@ -124,8 +126,8 @@ class Submitter extends Curl
         $headers = array();
         // $headers[] = 'Cookie: PHPSESSID=1uv8lhltg2ceas7d8qtgon0cc2';
         // curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_team0670.cookie"));
-        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_team0670.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/{$oj}_{$handle}.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/{$oj}_{$handle}.cookie"));
 
         $result = curl_exec($ch);
         curl_close($ch);
@@ -185,10 +187,12 @@ class Submitter extends Curl
 
     private function contestSubmit() {
         $this->_contestLogin();
+        $uniqueID=sha1($this->post_data["solution"]);
+        $headers = "// NOJ Submission - $uniqueID\n"; 
         $params=[
             'problemid' => $this->post_data['iid'],
             'language' => $this->post_data['lang'],
-            'usercode' => base64_encode(urlencode($this->post_data["solution"])),
+            'usercode' => base64_encode(urlencode($headers.$this->post_data["solution"])),
         ];
 
         $pid = $this->post_data['iid'];
@@ -206,6 +210,7 @@ class Submitter extends Curl
         $this->sub['vcid'] = $vcid;
         $res = $this->__loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user=".$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
         if (!preg_match('/<td height=22>([\s\S]*?)<\/td>/', $res, $match)) {
+                sleep(5);
                 $this->sub['verdict']='Submission Error';
         } else {
                 $this->sub['remote_id']=$match[1];
