@@ -276,6 +276,7 @@ class Synchronizer extends CrawlerBase
                 $team['name'] = strip_tags($matches[2][$i]);
                 $team['nick_name'] = null;
                 $team['score'] = $matches[3][$i];
+                $team['remote'] = 1;
                 $originTime = $matches[4][$i];
                 $hour = intval(substr($originTime,0,3))*60;
                 $minute = intval(substr($originTime,3,5));
