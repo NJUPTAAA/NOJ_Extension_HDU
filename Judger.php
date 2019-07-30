@@ -40,17 +40,43 @@ class Judger extends Curl
             'handle' => $handle
         ]);
         if (strpos($response, 'Sign In')!==false) {
-            $params=[
-                'username' => $handle,
-                'userpass' => $pass,
-                'login' => 'Sign In',
-            ];
-            $this->login([
-                'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid, 
-                'data' => http_build_query($params), 
-                'oj' => 'hdu', 
-                'handle' => $handle
-            ]);
+            // $params=[
+            //     'username' => $handle,
+            //     'userpass' => $pass,
+            //     'login' => 'Sign In',
+            // ];
+            // $this->login([
+            //     'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid, 
+            //     'data' => http_build_query($params), 
+            //     'oj' => 'hdu', 
+            //     'handle' => $handle
+            // ]);
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, 'http://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$vcid.'&notice=0');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, "username=".$handle."&userpass=".$pass."&login=Sign+In");
+            curl_setopt($ch, CURLOPT_POST, 1);
+
+            $headers = array();
+            $headers[] = 'Proxy-Connection: keep-alive';
+            $headers[] = 'Cache-Control: max-age=0';
+            $headers[] = 'Origin: http://acm.hdu.edu.cn';
+            $headers[] = 'Upgrade-Insecure-Requests: 1';
+            $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+            $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36';
+            $headers[] = 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3';
+            $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid;
+            $headers[] = 'Accept-Encoding: gzip, deflate';
+            $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
+            // $headers[] = 'Cookie: PHPSESSID=ue2sksargld83je7eqhkjmmff3';
+            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$handle}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$handle}.cookie"));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch,CURLOPT_HEADER,true);
+
+            $result = curl_exec($ch);
+            curl_close($ch);
         }
     }
 
@@ -82,17 +108,43 @@ class Judger extends Curl
             'handle' => $handle
         ]);
         if (strpos($response, 'Sign In')!==false) {
-            $params=[
-                'username' => $handle,
-                'userpass' => $pass,
-                'login' => 'Sign In',
-            ];
-            $curl->login([
-                'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid, 
-                'data' => http_build_query($params), 
-                'oj' => 'hdu', 
-                'handle' => $handle
-            ]);
+            // $params=[
+            //     'username' => $handle,
+            //     'userpass' => $pass,
+            //     'login' => 'Sign In',
+            // ];
+            // $curl->login([
+            //     'url' => 'http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid, 
+            //     'data' => http_build_query($params), 
+            //     'oj' => 'hdu', 
+            //     'handle' => $handle
+            // ]);
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, 'http://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$vcid.'&notice=0');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, "username=".$handle."&userpass=".$pass."&login=Sign+In");
+            curl_setopt($ch, CURLOPT_POST, 1);
+
+            $headers = array();
+            $headers[] = 'Proxy-Connection: keep-alive';
+            $headers[] = 'Cache-Control: max-age=0';
+            $headers[] = 'Origin: http://acm.hdu.edu.cn';
+            $headers[] = 'Upgrade-Insecure-Requests: 1';
+            $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+            $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36';
+            $headers[] = 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3';
+            $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid;
+            $headers[] = 'Accept-Encoding: gzip, deflate';
+            $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
+            // $headers[] = 'Cookie: PHPSESSID=ue2sksargld83je7eqhkjmmff3';
+            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$handle}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$handle}.cookie"));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch,CURLOPT_HEADER,true);
+
+            $result = curl_exec($ch);
+            curl_close($ch);
         }
         return $this->grab([
             'site'=>$url,
