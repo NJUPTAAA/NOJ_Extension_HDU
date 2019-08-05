@@ -194,7 +194,8 @@ class Synchronizer extends CrawlerBase
             'vcid' => $this->vcid,
             'assign_uid' => 1,
             'practice' => 1,
-            'crawled' => 0
+            'crawled' => 0,
+            'public' => 0,
         ];
         $noj_cid = $contestModel->arrangeContest($this->gid, $contestInfo, $this->problemSet);
         $this->line("Successfully crawl the contest.\n");
