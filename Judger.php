@@ -2,7 +2,7 @@
 namespace App\Babel\Extension\hdu;
 
 use App\Babel\Submit\Curl;
-use App\Models\SubmissionModel;
+use App\Models\Submission\SubmissionModel;
 use App\Models\ProblemModel;
 use App\Models\JudgerModel;
 use KubAT\PhpSimple\HtmlDomParser;
