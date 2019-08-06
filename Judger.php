@@ -35,6 +35,7 @@ class Judger extends Curl
     private function grab($all_data) {
         $oj = $all_data['oj'];
         $handle = $all_data['handle'];
+        $vcid = $all_data['vcid'];
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $all_data['site']);
@@ -43,8 +44,8 @@ class Judger extends Curl
 
 
         $headers = array();
-        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/{$oj}_{$handle}.cookie"));
-        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/{$oj}_{$handle}.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/{$oj}_{$vcid}{$handle}.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/{$oj}_{$vcid}{$handle}.cookie"));
 
         $result = curl_exec($ch);
         curl_close($ch);
@@ -57,7 +58,8 @@ class Judger extends Curl
         $response=$curl->grab_page([
             'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$vcid,
             'oj' => 'hdu', 
-            'handle' => $handle
+            'handle' => $handle,
+            "vcid" => $vcid,
         ]);
         if (strpos($response, 'Sign In')!==false) {
             $ch = curl_init();
@@ -78,8 +80,8 @@ class Judger extends Curl
             $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$vcid;
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
-            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$handle}.cookie"));
-            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$handle}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$vcid}{$handle}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$vcid}{$handle}.cookie"));
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch,CURLOPT_HEADER,true);
 
@@ -90,6 +92,7 @@ class Judger extends Curl
             'site'=>$url,
             'oj'=>'hdu',
             'handle'=>$handle,
+            'vcid'=>$vcid,
         ]);
     }
     
@@ -98,7 +101,7 @@ class Judger extends Curl
         $sub = [];
         if(!isset($row['vcid'])) {
             $response = Requests::get("http://acm.hdu.edu.cn/status.php?first=".$row['remote_id'])->body;
-            if(!$response || isnull($response)) { throw new Exception("Cannot grab page."); return;}
+            if(!$response) { throw new Exception("Cannot grab page."); return;}
             preg_match ('/<\/td><td>[\\s\\S]*?<\/td><td>[\\s\\S]*?<\/td><td>([\\s\\S]*?)<\/td><td>[\\s\\S]*?<\/td><td>(\\d*?)MS<\/td><td>(\\d*?)K<\/td>/', $response, $match);
             if(strpos(trim(strip_tags($match[1])), 'Runtime Error')!==false)  $sub['verdict'] = 'Runtime Error';
             else $sub['verdict'] = $this->verdict[trim(strip_tags($match[1]))];
@@ -118,7 +121,7 @@ class Judger extends Curl
             $handle = $judger['handle'];
             $pass = $judger['password'];
             $response = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid=".$row['vcid']."&user=".$handle."&pid=".$iid, $handle, $pass, $row['vcid']);
-            if(!$response || isnull($response)) { throw new Exception("Cannot grab page."); return;}
+            if(!$response) { throw new Exception("Cannot grab page."); return;}
             $hduRes = HTMLDomParser::str_get_html($response, true, true, DEFAULT_TARGET_CHARSET, false);
             foreach($hduRes->find('tr') as $ele) {
                 $elements=$ele->children();

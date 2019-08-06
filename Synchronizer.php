@@ -40,11 +40,13 @@ class Synchronizer extends CrawlerBase
     {
         $curl = new Curl();
         $response=$curl->grab_page([
-            'site' => "http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid,
+            'site' => "http://acm.hdu.edu.cn/userloginex.php?cid=".$this->vcid,
             'oj' => 'hdu', 
-            'handle' => $this->selectedJudger["handle"]
+            'handle' => $this->selectedJudger["handle"],
+            'vcid' => $this->vcid,
         ]);
         if (strpos($response, 'Sign In')!==false) {
+            
             $ch = curl_init();
 
             curl_setopt($ch, CURLOPT_URL, 'http://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$this->vcid.'&notice=0');
@@ -63,8 +65,8 @@ class Synchronizer extends CrawlerBase
             $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$this->vcid;
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
-            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->selectedJudger['handle']}.cookie"));
-            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->vcid}{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->vcid}{$this->selectedJudger['handle']}.cookie"));
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch,CURLOPT_HEADER,true);
 
@@ -75,6 +77,7 @@ class Synchronizer extends CrawlerBase
             'site'=>$url,
             'oj'=>'hdu',
             'handle'=>$this->selectedJudger["handle"],
+            'vcid' => $this->vcid,
         ]);
     }
 
@@ -185,7 +188,7 @@ class Synchronizer extends CrawlerBase
     public function crawlContest() {
         $contestModel = new ContestModel();
         $res = iconv("gb2312","utf-8//IGNORE",$this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid));
-        if(isnull($res)) { throw new Exception("Cannot grab page.");return; }
+        if(!$res) { throw new Exception("Cannot grab page.");return; }
         $contestInfo = [
             'name' => self::find('/<h1[\s\S]*?>([\s\S]*?)<\/h1>/',$res),
             'begin_time' => self::find('/Start Time : ([\s\S]*?)&/',$res),
@@ -235,7 +238,7 @@ class Synchronizer extends CrawlerBase
     public function _clarification($id) 
     {
         $res = iconv("gb2312","utf-8//IGNORE",$this->_loginAndGet("http://acm.hdu.edu.cn/viewnotify.php?id={$id}&cid=".$this->vcid));
-        if(isnull($res)) { throw new Exception("Cannot grab page.");return false; }
+        if(!$res) { throw new Exception("Cannot grab page.");return false; }
         if(strpos($res,"No such notification.") !== false) { return false; }
         $contestModel = new ContestModel();
         if(($contestModel->remoteAnnouncement($this->vcid."-".$id))!=null) {

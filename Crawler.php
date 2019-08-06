@@ -95,7 +95,7 @@ class Crawler extends CrawlerBase
             $lastVolume = isset($_lastVolume)?$_lastVolume:56;
             $HDUVolumePage = HtmlDomParser::str_get_html(Requests::get("http://acm.hdu.edu.cn/listproblem.php?vol=$lastVolume", ['Referer' => 'http://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
             $_lastProbID = intval($HDUVolumePage->find('tr[height="22"]', -1)->find("td", 0)->plaintext);
-            $lastProbID = $_lastProbID != 0?$_lastProbID:6566;
+            $lastProbID = $_lastProbID != 0?$_lastProbID:6633;
             foreach (range(1000, $lastProbID) as $probID) {
                 $this->_crawl($probID, 5);
             }
