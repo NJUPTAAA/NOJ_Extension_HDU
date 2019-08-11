@@ -96,8 +96,8 @@ class Submitter extends Curl
 
 
         $headers = array();
-        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/{$oj}_{$vcid}{$handle}.cookie"));
-        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/{$oj}_{$vcid}{$handle}.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/{$oj}_{$vcid}_{$handle}.cookie"));
+        curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/{$oj}_{$vcid}_{$handle}.cookie"));
 
         $result = curl_exec($ch);
         curl_close($ch);
@@ -132,8 +132,8 @@ class Submitter extends Curl
             $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'];
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
-            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->post_data['vcid']}{$this->selectedJudger['handle']}.cookie"));
-            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->post_data['vcid']}{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->post_data['vcid']}_{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->post_data['vcid']}_{$this->selectedJudger['handle']}.cookie"));
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch,CURLOPT_HEADER,true);
 
@@ -176,8 +176,8 @@ class Submitter extends Curl
             $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'];
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
-            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->post_data['vcid']}{$this->selectedJudger['handle']}.cookie"));
-            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->post_data['vcid']}{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->post_data['vcid']}_{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->post_data['vcid']}_{$this->selectedJudger['handle']}.cookie"));
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch,CURLOPT_HEADER,true);
 

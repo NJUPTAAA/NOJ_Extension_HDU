@@ -65,8 +65,8 @@ class Synchronizer extends CrawlerBase
             $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$this->vcid;
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
-            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->vcid}{$this->selectedJudger['handle']}.cookie"));
-            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->vcid}{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->vcid}_{$this->selectedJudger['handle']}.cookie"));
+            curl_setopt($ch, CURLOPT_COOKIEJAR, babel_path("Cookies/hdu_{$this->vcid}_{$this->selectedJudger['handle']}.cookie"));
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch,CURLOPT_HEADER,true);
 
@@ -101,19 +101,19 @@ class Synchronizer extends CrawlerBase
             } else {
                 $url='http://acm.hdu.edu.cn/'.$src;
             }
-            $res=Requests::get($url, ['Referer' => 'http://acm.hdu.edu.cn']);
+            $res=$this->_loginAndGet($url);
             $ext=['image/jpeg'=>'.jpg', 'image/png'=>'.png', 'image/gif'=>'.gif', 'image/bmp'=>'.bmp'];
             if (isset($res->headers['content-type'])) {
                 $cext=$ext[$res->headers['content-type']];
             } else {
-                $pos=strpos($ele->src, '.');
+                $pos=strripos($ele->src, '.');
                 if ($pos===false) {
                     $cext='';
                 } else {
                     $cext=substr($ele->src, $pos);
                 }
             }
-            $fn=$this->con.'_'.($this->imgi++).$cext;
+            $fn=$this->vcid."_".$this->con.'_'.($this->imgi++).$cext;
             $dir=base_path("public/external/hdu/img");
             if (!file_exists($dir)) {
                 mkdir($dir, 0755, true);
@@ -126,6 +126,7 @@ class Synchronizer extends CrawlerBase
 
     public function crawlProblem($con)
     {
+        sleep(6);
         $this->_resetPro();
         $this->con = $con;
         $this->imgi = 1;
