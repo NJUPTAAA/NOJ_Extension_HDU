@@ -22,7 +22,7 @@ class Judger extends Curl
         'Runtime Error'=>"Runtime Error",
         'Output Limit Exceeded'=>"Output Limit Exceeded",
         'Compilation Error'=>"Compile Error",
-        'System Erro'=>'Submission Error',
+        'System Error'=>'Wrong Answer',
     ];
     private $model=[];
 
