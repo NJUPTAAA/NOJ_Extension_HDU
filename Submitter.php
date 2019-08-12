@@ -8,6 +8,7 @@ use App\Models\OJModel;
 use Illuminate\Support\Facades\Validator;
 use Requests;
 use Log;
+use Exception;
 
 class Submitter extends Curl
 {
@@ -78,7 +79,9 @@ class Submitter extends Curl
         $this->sub['jid'] = $this->selectedJudger['jid'];
         $res = Requests::get('http://acm.hdu.edu.cn/status.php?user='.$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
         if (!preg_match("/<td height=22px>([\s\S]*?)<\/td>/", $res->body, $match)) {
-                $this->sub['verdict']='Submission Error';
+                sleep(1);
+                throw new \Exception("Submission error");
+                // $this->sub['verdict']='Submission Error';
         } else {
                 $this->sub['remote_id']=$match[1];
         }
@@ -210,10 +213,12 @@ class Submitter extends Curl
         ]);
         $this->sub['jid'] = $this->selectedJudger['jid'];
         $this->sub['vcid'] = $vcid;
+        sleep(4);
         $res = $this->__loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user=".$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
         if (!preg_match('/<td height=22>([\s\S]*?)<\/td>/', $res, $match)) {
-                sleep(7);
-                $this->sub['verdict']='Submission Error';
+                sleep(1);
+                throw new \Exception("Submission error");
+                // $this->sub['verdict']='Submission Error';
         } else {
                 $this->sub['remote_id']=$match[1];
         }
