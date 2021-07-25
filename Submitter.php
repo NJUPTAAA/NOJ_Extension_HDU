@@ -37,7 +37,7 @@ class Submitter extends Curl
     private function _login()
     {
         $response=$this->grab_page([
-            'site' => 'http://acm.hdu.edu.cn',
+            'site' => 'https://acm.hdu.edu.cn',
             'oj' => 'hdu', 
             'handle' => $this->selectedJudger["handle"]
         ]);
@@ -48,7 +48,7 @@ class Submitter extends Curl
                 'login' => 'Sign In',
             ];
             $this->login([
-                'url' => 'http://acm.hdu.edu.cn/userloginex.php?action=login', 
+                'url' => 'https://acm.hdu.edu.cn/userloginex.php?action=login', 
                 'data' => http_build_query($params), 
                 'oj' => 'hdu', 
                 'handle' => $this->selectedJudger["handle"]
@@ -66,7 +66,7 @@ class Submitter extends Curl
         ];
 
         $response=$this->post_data([
-            'site' => "http://acm.hdu.edu.cn/submit.php?action=submit", 
+            'site' => "https://acm.hdu.edu.cn/submit.php?action=submit", 
             'data' => http_build_query($params), 
             'oj' => "hdu", 
             "ret" => true,
@@ -77,7 +77,7 @@ class Submitter extends Curl
             "handle" => $this->selectedJudger["handle"]
         ]);
         $this->sub['jid'] = $this->selectedJudger['jid'];
-        $res = Requests::get('http://acm.hdu.edu.cn/status.php?user='.$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
+        $res = Requests::get('https://acm.hdu.edu.cn/status.php?user='.$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
         if (!preg_match("/<td height=22px>([\s\S]*?)<\/td>/", $res->body, $match)) {
                 sleep(1);
                 throw new \Exception("Submission error");
@@ -111,7 +111,7 @@ class Submitter extends Curl
     {
         $curl = new Curl();
         $response=$curl->grab_page([
-            'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->post_data['vcid'],
+            'site' => 'https://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->post_data['vcid'],
             'oj' => 'hdu', 
             'handle' => $this->selectedJudger["handle"],
             "vcid" => $this->post_data['vcid'],
@@ -119,7 +119,7 @@ class Submitter extends Curl
         if (strpos($response, 'Sign In')!==false) {
             $ch = curl_init();
 
-            curl_setopt($ch, CURLOPT_URL, 'http://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$this->post_data['vcid'].'&notice=0');
+            curl_setopt($ch, CURLOPT_URL, 'https://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$this->post_data['vcid'].'&notice=0');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, "username=".$this->selectedJudger['handle']."&userpass=".$this->selectedJudger['password']."&login=Sign+In");
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -127,12 +127,12 @@ class Submitter extends Curl
             $headers = array();
             $headers[] = 'Proxy-Connection: keep-alive';
             $headers[] = 'Cache-Control: max-age=0';
-            $headers[] = 'Origin: http://acm.hdu.edu.cn';
+            $headers[] = 'Origin: https://acm.hdu.edu.cn';
             $headers[] = 'Upgrade-Insecure-Requests: 1';
             $headers[] = 'Content-Type: application/x-www-form-urlencoded';
             $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36';
             $headers[] = 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3';
-            $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'];
+            $headers[] = 'Referer: https://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'];
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
             curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->post_data['vcid']}_{$this->selectedJudger['handle']}.cookie"));
@@ -155,7 +155,7 @@ class Submitter extends Curl
     {
         $curl = new Curl();
         $response=$curl->grab_page([
-            'site' => 'http://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->post_data['vcid'],
+            'site' => 'https://acm.hdu.edu.cn/contests/contest_show.php?cid='.$this->post_data['vcid'],
             'oj' => 'hdu', 
             'handle' => $this->selectedJudger["handle"],
             'vcid' => $this->post_data['vcid'],
@@ -163,7 +163,7 @@ class Submitter extends Curl
         if (strpos($response, 'Sign In')!==false) {
             $ch = curl_init();
 
-            curl_setopt($ch, CURLOPT_URL, 'http://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$this->post_data['vcid'].'&notice=0');
+            curl_setopt($ch, CURLOPT_URL, 'https://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$this->post_data['vcid'].'&notice=0');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, "username=".$this->selectedJudger['handle']."&userpass=".$this->selectedJudger['password']."&login=Sign+In");
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -171,12 +171,12 @@ class Submitter extends Curl
             $headers = array();
             $headers[] = 'Proxy-Connection: keep-alive';
             $headers[] = 'Cache-Control: max-age=0';
-            $headers[] = 'Origin: http://acm.hdu.edu.cn';
+            $headers[] = 'Origin: https://acm.hdu.edu.cn';
             $headers[] = 'Upgrade-Insecure-Requests: 1';
             $headers[] = 'Content-Type: application/x-www-form-urlencoded';
             $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36';
             $headers[] = 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3';
-            $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'];
+            $headers[] = 'Referer: https://acm.hdu.edu.cn/userloginex.php?cid='.$this->post_data['vcid'];
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
             curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->post_data['vcid']}_{$this->selectedJudger['handle']}.cookie"));
@@ -202,7 +202,7 @@ class Submitter extends Curl
         $pid = $this->post_data['iid'];
         $vcid = $this->post_data['vcid'];
         $response=$this->post_data([
-            'site' => "http://acm.hdu.edu.cn/contests/contest_submit.php?action=submit&cid={$vcid}", 
+            'site' => "https://acm.hdu.edu.cn/contests/contest_submit.php?action=submit&cid={$vcid}", 
             'data' => http_build_query($params), 
             'oj' => "hdu", 
             "ret" => true,
@@ -214,7 +214,7 @@ class Submitter extends Curl
         $this->sub['jid'] = $this->selectedJudger['jid'];
         $this->sub['vcid'] = $vcid;
         sleep(4);
-        $res = $this->__loginAndGet("http://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user=".$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
+        $res = $this->__loginAndGet("https://acm.hdu.edu.cn/contests/contest_status.php?cid={$vcid}&user=".$this->selectedJudger['handle'].'&pid='.$this->post_data['iid']);
         if (!preg_match('/<td height=22>([\s\S]*?)<\/td>/', $res, $match)) {
                 sleep(1);
                 throw new \Exception("Submission error");

@@ -40,7 +40,7 @@ class Synchronizer extends CrawlerBase
     {
         $curl = new Curl();
         $response=$curl->grab_page([
-            'site' => "http://acm.hdu.edu.cn/userloginex.php?cid=".$this->vcid,
+            'site' => "https://acm.hdu.edu.cn/userloginex.php?cid=".$this->vcid,
             'oj' => 'hdu', 
             'handle' => $this->selectedJudger["handle"],
             'vcid' => $this->vcid,
@@ -49,7 +49,7 @@ class Synchronizer extends CrawlerBase
             
             $ch = curl_init();
 
-            curl_setopt($ch, CURLOPT_URL, 'http://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$this->vcid.'&notice=0');
+            curl_setopt($ch, CURLOPT_URL, 'https://acm.hdu.edu.cn/userloginex.php?action=login&cid='.$this->vcid.'&notice=0');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, "username=".$this->selectedJudger['handle']."&userpass=".$this->selectedJudger['password']."&login=Sign+In");
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -57,12 +57,12 @@ class Synchronizer extends CrawlerBase
             $headers = array();
             $headers[] = 'Proxy-Connection: keep-alive';
             $headers[] = 'Cache-Control: max-age=0';
-            $headers[] = 'Origin: http://acm.hdu.edu.cn';
+            $headers[] = 'Origin: https://acm.hdu.edu.cn';
             $headers[] = 'Upgrade-Insecure-Requests: 1';
             $headers[] = 'Content-Type: application/x-www-form-urlencoded';
             $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36';
             $headers[] = 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3';
-            $headers[] = 'Referer: http://acm.hdu.edu.cn/userloginex.php?cid='.$this->vcid;
+            $headers[] = 'Referer: https://acm.hdu.edu.cn/userloginex.php?cid='.$this->vcid;
             $headers[] = 'Accept-Encoding: gzip, deflate';
             $headers[] = 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8';
             curl_setopt($ch, CURLOPT_COOKIEFILE, babel_path("Cookies/hdu_{$this->vcid}_{$this->selectedJudger['handle']}.cookie"));
@@ -97,9 +97,9 @@ class Synchronizer extends CrawlerBase
             if (strpos($src, '://')!==false) {
                 $url=$src;
             } elseif ($src[0]=='/') {
-                $url='http://acm.hdu.edu.cn'.$src;
+                $url='https://acm.hdu.edu.cn'.$src;
             } else {
-                $url='http://acm.hdu.edu.cn/'.$src;
+                $url='https://acm.hdu.edu.cn/'.$src;
             }
             $res=$this->_loginAndGet($url);
             $ext=['image/jpeg'=>'.jpg', 'image/png'=>'.png', 'image/gif'=>'.gif', 'image/bmp'=>'.bmp'];
@@ -131,7 +131,7 @@ class Synchronizer extends CrawlerBase
         $this->con = $con;
         $this->imgi = 1;
         $problemModel = new ProblemModel();
-        $res = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid);
+        $res = $this->_loginAndGet("https://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid);
         $this->line("Crawling: {$con}\n");
         if (strpos($res,"No such problem") !== false) {
             return false;
@@ -144,7 +144,7 @@ class Synchronizer extends CrawlerBase
         $this->pro['OJ'] = $this->oid;
         $this->pro['contest_id'] = null;
         $this->pro['index_id'] = $con;
-        $this->pro['origin'] = "http://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid;
+        $this->pro['origin'] = "https://acm.hdu.edu.cn/contests/contest_showproblem.php?pid={$con}&cid=".$this->vcid;
         
         $this->pro['title'] = self::find('/<h1[\s\S]*?>([\s\S]*?)<\/h1>/',$res);
         $this->pro['time_limit'] = self::find('/Time Limit:.*\/(.*) MS/',$res);
@@ -188,7 +188,7 @@ class Synchronizer extends CrawlerBase
 
     public function crawlContest() {
         $contestModel = new ContestModel();
-        $res = iconv("gb2312","utf-8//IGNORE",$this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid));
+        $res = iconv("gb2312","utf-8//IGNORE",$this->_loginAndGet("https://acm.hdu.edu.cn/contests/contest_show.php?cid=".$this->vcid));
         if(!$res) { throw new Exception("Cannot grab page.");return; }
         $contestInfo = [
             'name' => self::find('/<h1[\s\S]*?>([\s\S]*?)<\/h1>/',$res),
@@ -238,7 +238,7 @@ class Synchronizer extends CrawlerBase
 
     public function _clarification($id) 
     {
-        $res = iconv("gb2312","utf-8//IGNORE",$this->_loginAndGet("http://acm.hdu.edu.cn/viewnotify.php?id={$id}&cid=".$this->vcid));
+        $res = iconv("gb2312","utf-8//IGNORE",$this->_loginAndGet("https://acm.hdu.edu.cn/viewnotify.php?id={$id}&cid=".$this->vcid));
         if(!$res) { throw new Exception("Cannot grab page.");return false; }
         if(strpos($res,"No such notification.") !== false) { return false; }
         $contestModel = new ContestModel();
@@ -259,7 +259,7 @@ class Synchronizer extends CrawlerBase
             return false;
         }
         $contestModel = new ContestModel();
-        $res = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page=1");
+        $res = $this->_loginAndGet("https://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page=1");
         preg_match_all('/<a href=[\s\S]*?style="display: inline-block; padding: 5px 8px; font-weight: bold;">([\d+]*?)<\/a>/',$res,$matches);
         if(!isset($match[1])) {
             $totalPageNumber = sizeof($matches[1]) / 2;
@@ -270,7 +270,7 @@ class Synchronizer extends CrawlerBase
         $problemNumber = sizeof($problemst);
         while($it <= $totalPageNumber) {
             $this->line("Crawling: Page{$it}\n");
-            $ret = $this->_loginAndGet("http://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page={$it}");
+            $ret = $this->_loginAndGet("https://acm.hdu.edu.cn/contests/contest_ranklist.php?cid=".$this->vcid."&page={$it}");
             $ret = iconv("gb2312","utf-8//IGNORE",$ret);
             $pattern = "/<td>([\s\S]*?)<\/td>";
             for($i = 1;$i <=3; $i++) {

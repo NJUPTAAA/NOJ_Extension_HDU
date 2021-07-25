@@ -60,11 +60,11 @@ class Crawler extends CrawlerBase
             if (strpos($src, '://')!==false) {
                 $url=$src;
             } elseif ($src[0]=='/') {
-                $url='http://acm.hdu.edu.cn'.$src;
+                $url='https://acm.hdu.edu.cn'.$src;
             } else {
-                $url='http://acm.hdu.edu.cn/'.$src;
+                $url='https://acm.hdu.edu.cn/'.$src;
             }
-            $res=Requests::get($url, ['Referer' => 'http://acm.hdu.edu.cn']);
+            $res=Requests::get($url, ['Referer' => 'https://acm.hdu.edu.cn']);
             $ext=['image/jpeg'=>'.jpg', 'image/png'=>'.png', 'image/gif'=>'.gif', 'image/bmp'=>'.bmp'];
             if (isset($res->headers['content-type'])) {
                 $cext=$ext[$res->headers['content-type']];
@@ -90,10 +90,10 @@ class Crawler extends CrawlerBase
     public function crawl($con) 
     {
         if($con=='all'){
-            $HDUVolume = HtmlDomParser::str_get_html(Requests::get("http://acm.hdu.edu.cn/listproblem.php", ['Referer' => 'http://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
+            $HDUVolume = HtmlDomParser::str_get_html(Requests::get("https://acm.hdu.edu.cn/listproblem.php", ['Referer' => 'https://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
             $_lastVolume = intval($HDUVolume->find('a[style="margin:5px"]', -1)->plaintext);
             $lastVolume = isset($_lastVolume)?$_lastVolume:56;
-            $HDUVolumePage = HtmlDomParser::str_get_html(Requests::get("http://acm.hdu.edu.cn/listproblem.php?vol=$lastVolume", ['Referer' => 'http://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
+            $HDUVolumePage = HtmlDomParser::str_get_html(Requests::get("https://acm.hdu.edu.cn/listproblem.php?vol=$lastVolume", ['Referer' => 'https://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
             $_lastProbID = intval($HDUVolumePage->find('tr[height="22"]', -1)->find("td", 0)->plaintext);
             $lastProbID = $_lastProbID != 0?$_lastProbID:6633;
             foreach (range(1000, $lastProbID) as $probID) {
@@ -130,7 +130,7 @@ class Crawler extends CrawlerBase
         if($this->action=="crawl_problem") $this->line("<fg=yellow>Crawling:   </>{$this->prefix}{$con}");
         elseif($this->action=="update_problem") $this->line("<fg=yellow>Updating:   </>{$this->prefix}{$con}");
         else return;
-        $res = Requests::get("http://acm.hdu.edu.cn/showproblem.php?pid={$con}");
+        $res = Requests::get("https://acm.hdu.edu.cn/showproblem.php?pid={$con}");
         if (strpos($res->body,"No such problem") !== false) {
             $this->line("\n  <bg=red;fg=white> Exception </> : <fg=yellow>Can not find problem.</>\n");
             throw new Exception("Can not find problem");
@@ -144,7 +144,7 @@ class Crawler extends CrawlerBase
         $this->pro['OJ'] = $this->oid;
         $this->pro['contest_id'] = null;
         $this->pro['index_id'] = $con;
-        $this->pro['origin'] = "http://acm.hdu.edu.cn/showproblem.php?pid={$con}";
+        $this->pro['origin'] = "https://acm.hdu.edu.cn/showproblem.php?pid={$con}";
         
         $this->pro['title'] = self::find("/<h1 style='color:#1A5CC8'>([\s\S]*?)<\/h1>/",$res->body);
         if($this->pro['title'] == "") {
