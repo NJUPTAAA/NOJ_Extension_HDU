@@ -1,0 +1,31 @@
+{
+    "modifications":[{
+        "code":"2",
+        "compability":"c",
+        "language":"cpp",
+        "icon":"devicon-cplusplus-plain",
+        "display":"C++",
+        "method":"modify"
+    },{
+        "code":"3",
+        "compability":"c",
+        "language":"c",
+        "icon":"devicon-c-plain",
+        "display":"C",
+        "method":"modify"
+    },{
+        "code":"4",
+        "compability":"pascal",
+        "language":"pascal",
+        "icon":"devicon-devicon-plain",
+        "display":"Pascal",
+        "method":"modify"
+    },{
+        "code":"5",
+        "compability":"java",
+        "language":"java",
+        "icon":"devicon-java-plain",
+        "display":"Java",
+        "method":"modify"
+    }]
+}
