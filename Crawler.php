@@ -168,7 +168,11 @@ class Crawler extends CrawlerBase
             'sample_input'=>self::find("/<pre><div.*>(.*)<\/div><\/pre>/sU",$res->body),
             'sample_output'=>self::find("/<div.*>Sample Output<\/div><div.*><pre><div.*>(.*)<\/div><\/pre><\/div>/sU",$res->body)
         ];
+        $this->pro['sample'][0]['sample_output']=explode("<div style=",$this->pro['sample'][0]['sample_output'])[0];
         $this->pro['note'] = self::find("/<i>Hint<\/i><\/div>(.*)<\/div><i style='font-size:1px'>/sU",$res->body);
+        if (!is_null($this->pro['note'])) {
+            $this->pro['note'] = "<pre style='background: transparent; border: transparent; margin: 0; padding: 0; font-size: 1rem;'>".$this->pro['note']."</pre>";
+        }
         $this->pro['source'] = strip_tags(self::find("/<div class=panel_title align=left>Source<\/div> (.*)<div class=panel_bottom>/sU",$res->body));
             
         if($this->pro['source'] === "") {
