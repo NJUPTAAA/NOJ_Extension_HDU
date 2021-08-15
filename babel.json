@@ -6,7 +6,7 @@
     "description": "HDU Interface for NOJ",
     "license": "MIT",
     "repository":"https://github.com/NJUPTAAA/NOJ_Extension_HDU",
-    "version":"0.4.2",
+    "version":"0.5.0",
     "website":"https://acm.hdu.edu.cn/",
     "custom":{
         "css":"resources/custom.css"
