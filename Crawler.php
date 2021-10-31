@@ -92,7 +92,7 @@ class Crawler extends CrawlerBase
         if($con=='all'){
             $HDUVolume = HtmlDomParser::str_get_html(Requests::get("https://acm.hdu.edu.cn/listproblem.php", ['Referer' => 'https://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
             $_lastVolume = intval($HDUVolume->find('a[style="margin:5px"]', -1)->plaintext);
-            $lastVolume = isset($_lastVolume)?$_lastVolume:56;
+            $lastVolume = isset($_lastVolume)?$_lastVolume:62;
             $HDUVolumePage = HtmlDomParser::str_get_html(Requests::get("https://acm.hdu.edu.cn/listproblem.php?vol=$lastVolume", ['Referer' => 'https://acm.hdu.edu.cn'])->body, true, true, DEFAULT_TARGET_CHARSET, false);
             $_lastProbID = intval($HDUVolumePage->find('tr[height="22"]', -1)->find("td", 0)->plaintext);
             $lastProbID = $_lastProbID != 0?$_lastProbID:6633;
